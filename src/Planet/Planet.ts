@@ -3,5 +3,5 @@
  * @see https://www.redblobgames.com/maps/mapgen4/
  */
 class Planet {
-  seed: number
+  seed: string
 }
