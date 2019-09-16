@@ -3,5 +3,25 @@
   "version": "0.0.1",
   "main": "main.js",
   "author": "Zizaco",
-  "license": "MIT"
+  "license": "MIT",
+  "scripts": {
+    "start": "webpack-dev-server --config webpack.config.dev.js",
+    "build": "webpack --config webpack.config.prod.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "dependencies": {
+    "babylonjs": "^4.0.3",
+    "localforage": "^1.7.3",
+    "simplex-noise": "^2.4.0"
+  },
+  "devDependencies": {
+    "@types/localforage": "^0.0.34",
+    "copy-webpack-plugin": "^5.0.4",
+    "ts-loader": "^6.1.0",
+    "typescript": "^3.6.3",
+    "webpack": "^4.40.2",
+    "webpack-cli": "^3.3.8",
+    "webpack-dev-server": "^3.8.1",
+    "webpack-glsl-loader": "^1.0.1"
+  }
 }
