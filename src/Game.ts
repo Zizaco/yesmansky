@@ -1,5 +1,6 @@
 import * as BABYLON from "babylonjs";
 import * as localforage from 'localforage';
+import { Planet } from './Planet/Planet';
 
 class Game {
   engine: BABYLON.Engine
@@ -15,18 +16,21 @@ class Game {
       Math.PI / 3.2,
       2,
       BABYLON.Vector3.Zero(),
-      this.scene);
+      this.scene
+    );
 
     camera.attachControl(el);
+    camera.wheelPrecision = 10
 
     const light = new BABYLON.HemisphericLight(
       "light",
       new BABYLON.Vector3(0, 1, 0),
       this.scene);
 
-    const mesh = BABYLON.MeshBuilder.CreateGround("mesh", {}, this.scene);
+    (window as any).planet = new Planet(this.scene)
+    // const mesh = BABYLON.MeshBuilder.CreateGround("mesh", {}, this.scene);
 
-    this.scene.debugLayer.show({ overlay: true });
+    this.scene.debugLayer.show({ embedMode: true, overlay: true });
     this.engine.runRenderLoop(() => this.render());
   }
 
