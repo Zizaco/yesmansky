@@ -21,7 +21,9 @@ class Planet {
     const textureResolution = 512
     const blueprint = {
       diff: new BABYLON.DynamicTexture("dynamic grass", textureResolution, scene, true),
-      normal: new BABYLON.Texture("textures/rockn.png", scene)
+      normal: new BABYLON.Texture("textures/planetNormal.png", scene),
+      specular: new BABYLON.Texture("textures/planetSpecular.png", scene),
+      planet: new BABYLON.Texture("textures/planet.png", scene, true)
     }
 
     // Dynamically draws the grass
@@ -55,9 +57,12 @@ class Planet {
     }
 
     const material = new BABYLON.StandardMaterial("planet", scene);
-    material.diffuseTexture = blueprint.diff
+    // material.diffuseTexture = blueprint.planet
     material.bumpTexture = blueprint.normal
-    material.specularColor = new BABYLON.Color3(0.4, 0.4, 0.4);
+    material.specularTexture = blueprint.specular
+    material.diffuseColor = new BABYLON.Color3(0.8, 0.26, 0.4)
+    material.specularColor = new BABYLON.Color3(0.2, 0.2, 0.2);
+    material.specularPower = 14
 
     return material
   }
