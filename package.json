@@ -12,7 +12,7 @@
   "dependencies": {
     "babylonjs": "^4.0.3",
     "localforage": "^1.7.3",
-    "simplex-noise": "^2.4.0"
+    "open-simplex-noise": "^1.6.0"
   },
   "devDependencies": {
     "@types/localforage": "^0.0.34",
