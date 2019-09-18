@@ -59,7 +59,7 @@ class Planet {
     const material = new BABYLON.StandardMaterial("planet", scene);
     // material.diffuseTexture = blueprint.planet
     material.bumpTexture = blueprint.normal
-    material.specularTexture = blueprint.specular
+    // material.specularTexture = blueprint.specular
     material.diffuseColor = new BABYLON.Color3(0.8, 0.26, 0.4)
     material.specularColor = new BABYLON.Color3(0.2, 0.2, 0.2);
     material.specularPower = 14

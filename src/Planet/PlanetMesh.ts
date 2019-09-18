@@ -5,6 +5,7 @@ import OpenSimplexNoise from 'open-simplex-noise';
 type PlanetMeshOptions = { subdivisions?: number }
 
 class PlanetMesh extends BABYLON.TransformNode {
+  planetMesh: BABYLON.Mesh
   faces: Array<BABYLON.Mesh>
   _scene: BABYLON.Scene
   _subdivisions: number
@@ -49,6 +50,8 @@ class PlanetMesh extends BABYLON.TransformNode {
     for (let i = 0; i < 6; i++) {
       this.faces[i].dispose()
     }
+
+    this.planetMesh.dispose()
   }
 
   protected generateFaces(scene: BABYLON.Scene) {
@@ -64,7 +67,12 @@ class PlanetMesh extends BABYLON.TransformNode {
       this.spherizeFace(this.faces[i])
       this.translateFace(this.faces[i], i)
       this.faces[i].setParent(this)
+      this.faces[i].isVisible = false
     }
+
+    this.planetMesh = BABYLON.Mesh.MergeMeshes(this.faces, false)
+    this.planetMesh.setParent(this)
+    this.smoothNormalsOfSphereMesh(this.planetMesh)
   }
 
   /**
@@ -116,12 +124,18 @@ class PlanetMesh extends BABYLON.TransformNode {
     face.translate(new Vector3(0, 1, 0), 0.5)
   }
 
+  protected smoothNormalsOfSphereMesh(mesh: BABYLON.Mesh) {
+    const positions = mesh.getVerticesData(BABYLON.VertexBuffer.PositionKind)
+    mesh.setVerticesData(BABYLON.VertexBuffer.NormalKind, positions)
+  }
+
   protected applyMaterial() {
     if (this._material) {
       for (let i = 0; i < 6; i++) {
         this.faces[i].material = this._material
       }
     }
+    this.planetMesh.material = this._material
   }
 
   protected setInspectableProperties() {
