@@ -7,25 +7,25 @@ import OpenSimplexNoise from 'open-simplex-noise';
  * @see https://www.redblobgames.com/maps/terrain-from-noise/
  * @see https://www.redblobgames.com/maps/mapgen4/
  */
-class Planet {
+class IcoPlanet {
   seed: string
-  mesh: PlanetMesh
+  mesh: IcoPlanetMesh
 
   constructor(scene) {
-    const options = { diameter: 1, diameterX: 1, subdivisions: 256 }
+    const options = { diameter: 1, diameterX: 1, subdivisions: 128 }
 
     // this.mesh = BABYLON.MeshBuilder.CreateSphere("sphere", options, scene);
-    this.mesh = new PlanetMesh('myPlanet', options as any, scene)
+    this.mesh = new IcoPlanetMesh('myPlanet', options as any, scene)
     // this.mesh.material = this.generateMaterialOld(scene)
     setTimeout(() => {
       this.mesh.material = this.generateMaterial(scene)
-    }, 100)
+    },100)
   }
 
   /**
    * New procedural material generation
    */
-  protected generateMaterial(scene): BABYLON.Material {
+  protected generateMaterial (scene) : BABYLON.Material {
     const textureResolution = 512
     const blueprint = {
       diff: new BABYLON.DynamicTexture("texture", textureResolution, scene, false),
@@ -48,12 +48,12 @@ class Planet {
     const normals = this.mesh.planetMesh.getVerticesData(BABYLON.VertexBuffer.NormalKind)
     const uv = this.mesh.planetMesh.getVerticesData(BABYLON.VertexBuffer.UVKind)
 
-    const pixelWidth = Math.ceil(textureResolution / 4 / this.mesh.subdivisions)
-    const pixelHeight = Math.ceil(textureResolution / 3 / this.mesh.subdivisions)
+    const pixelWidth = Math.ceil(textureResolution / this.mesh.subdivisions / 5)
+    const pixelHeight = Math.ceil(textureResolution / this.mesh.subdivisions / 5)
 
     const numberOfVertices = normals.length / 3
     grassDrawContext.fillStyle = `rgb(128,128,128)`
-    grassDrawContext.fillRect(0, 0, 512, 512)
+    grassDrawContext.fillRect(0,0,512,512)
     // grassDrawContext.filter = `blur(${pixelWidth/2}px)`;
     for (let i = 0; i < numberOfVertices; i++) {
       const [x, y, z] = [normals[i * 3], normals[i * 3 + 1], normals[i * 3 + 2]]
@@ -73,8 +73,7 @@ class Planet {
       // if (ensureIsHorizontalSide && isLastPixelOfTopSide) {
       //   grassDrawContext.fillRect(512 * uv[i * 2], 512 * uv[i * 2 + 1], pixelWidth, pixelHeight+16)
       // }
-      grassDrawContext.fillRect(512 * uv[i * 2] - pixelWidth / 2, 512 * (1 - uv[i * 2 + 1]) - pixelHeight / 2, pixelWidth, pixelHeight)
-
+      grassDrawContext.fillRect(512 * uv[i * 2] - pixelWidth / 2, 512 * (1 - uv[i * 2 + 1]) - pixelWidth/2, pixelWidth, pixelHeight)
     }
 
     // grassDrawContext.putImageData(imageData, 0, 0);
@@ -84,13 +83,13 @@ class Planet {
     // material.bumpTexture = new BABYLON.Texture("textures/planetNormal.png", scene)
     // material.diffuseColor = new BABYLON.Color3(0.8, 0.26, 0.4)
     material.specularColor = new BABYLON.Color3(0.2, 0.2, 0.2);
-    material.emissiveColor = new BABYLON.Color3(1, 1, 1);
+    // material.emissiveColor = new BABYLON.Color3(1, 1, 1);
     material.specularPower = 14
 
     return material
   }
 
-  protected generateMaterialOld(scene): BABYLON.Material {
+  protected generateMaterialOld (scene) : BABYLON.Material {
     const textureResolution = 512
     const blueprint = {
       diff: new BABYLON.DynamicTexture("dynamic grass", textureResolution, scene, true),
@@ -141,4 +140,4 @@ class Planet {
   }
 }
 
-export { Planet }
+export { IcoPlanet }
