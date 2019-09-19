@@ -12,7 +12,7 @@ class Planet {
   mesh: IcoPlanetMesh
 
   constructor(scene) {
-    const options = { diameter: 1, diameterX: 1, subdivisions: 30 }
+    const options = { diameter: 1, diameterX: 1, subdivisions: 128 }
 
     // this.mesh = BABYLON.MeshBuilder.CreateSphere("sphere", options, scene);
     this.mesh = new IcoPlanetMesh('myPlanet', options as any, scene)
@@ -48,8 +48,8 @@ class Planet {
     const normals = this.mesh.planetMesh.getVerticesData(BABYLON.VertexBuffer.NormalKind)
     const uv = this.mesh.planetMesh.getVerticesData(BABYLON.VertexBuffer.UVKind)
 
-    const pixelWidth = Math.ceil(textureResolution / 4 / this.mesh.subdivisions)
-    const pixelHeight = Math.ceil(textureResolution / 3 / this.mesh.subdivisions)
+    const pixelWidth = Math.ceil(textureResolution / this.mesh.subdivisions / 5)
+    const pixelHeight = Math.ceil(textureResolution / this.mesh.subdivisions / 5)
 
     const numberOfVertices = normals.length / 3
     grassDrawContext.fillStyle = `rgb(128,128,128)`
@@ -59,32 +59,31 @@ class Planet {
       const [x, y, z] = [normals[i * 3], normals[i * 3 + 1], normals[i * 3 + 2]]
       const value = (openSimplex.noise3D(x * 8, y * 8, z * 8) + 1) * 128;
       grassDrawContext.fillStyle = `rgb(${value}, ${value}, ${value})`
-      const isHorizontalSide = 512 * uv[i * 2 + 1] < (512 / 3) || 512 * uv[i * 2 + 1] > (512 / 3) * 2
-      const ensureIsHorizontalSide = Math.floor(512 * uv[i * 2]) < Math.floor(512 / 4) || Math.floor(512 * uv[i * 2]) > Math.floor(512 / 4 * 2)
-      const isFirstPixelOfLeftSide = Math.floor(512 * uv[i * 2]) === 128
-      const isFirstPixelOfTopSide = Math.floor(512 * uv[i * 2+1]) === Math.floor(512/3)
-      const isLastPixelOfTopSide = Math.floor(512 * uv[i * 2+1]) === Math.floor(512/3*2)
-      if (isFirstPixelOfTopSide) {
-        grassDrawContext.fillRect(512 * uv[i * 2], 512 * uv[i * 2 + 1] -16, pixelWidth, pixelHeight+16)
-      }
-      if (isHorizontalSide && isFirstPixelOfLeftSide ) {
-        grassDrawContext.fillRect(512 * uv[i * 2]-16, 512 * uv[i * 2 + 1], pixelWidth+16, pixelHeight)
-      }
-      if (ensureIsHorizontalSide && isLastPixelOfTopSide) {
-        grassDrawContext.fillRect(512 * uv[i * 2], 512 * uv[i * 2 + 1], pixelWidth, pixelHeight+16)
-      }
-      grassDrawContext.fillRect(512 * uv[i * 2], 512 * uv[i * 2 + 1], pixelWidth, pixelHeight)
-
+      // const isHorizontalSide = 512 * uv[i * 2 + 1] < (512 / 3) || 512 * uv[i * 2 + 1] > (512 / 3) * 2
+      // const ensureIsHorizontalSide = Math.floor(512 * uv[i * 2]) < Math.floor(512 / 4) || Math.floor(512 * uv[i * 2]) > Math.floor(512 / 4 * 2)
+      // const isFirstPixelOfLeftSide = Math.floor(512 * uv[i * 2]) === 128
+      // const isFirstPixelOfTopSide = Math.floor(512 * uv[i * 2+1]) === Math.floor(512/3)
+      // const isLastPixelOfTopSide = Math.floor(512 * uv[i * 2+1]) === Math.floor(512/3*2)
+      // if (isFirstPixelOfTopSide) {
+      //   grassDrawContext.fillRect(512 * uv[i * 2], 512 * uv[i * 2 + 1] -16, pixelWidth, pixelHeight+16)
+      // }
+      // if (isHorizontalSide && isFirstPixelOfLeftSide ) {
+      //   grassDrawContext.fillRect(512 * uv[i * 2]-16, 512 * uv[i * 2 + 1], pixelWidth+16, pixelHeight)
+      // }
+      // if (ensureIsHorizontalSide && isLastPixelOfTopSide) {
+      //   grassDrawContext.fillRect(512 * uv[i * 2], 512 * uv[i * 2 + 1], pixelWidth, pixelHeight+16)
+      // }
+      grassDrawContext.fillRect(512 * uv[i * 2] - pixelWidth / 2, 512 * (1 - uv[i * 2 + 1]) - pixelWidth/2, pixelWidth, pixelHeight)
     }
 
     // grassDrawContext.putImageData(imageData, 0, 0);
     blueprint.diff.update();
     const material = new BABYLON.StandardMaterial("planet", scene);
     material.diffuseTexture = blueprint.diff
-    material.bumpTexture = new BABYLON.Texture("textures/planetNormal.png", scene)
+    // material.bumpTexture = new BABYLON.Texture("textures/planetNormal.png", scene)
     // material.diffuseColor = new BABYLON.Color3(0.8, 0.26, 0.4)
     material.specularColor = new BABYLON.Color3(0.2, 0.2, 0.2);
-    material.emissiveColor = new BABYLON.Color3(1, 1, 1);
+    // material.emissiveColor = new BABYLON.Color3(1, 1, 1);
     material.specularPower = 14
 
     return material

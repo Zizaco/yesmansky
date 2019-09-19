@@ -14,7 +14,7 @@ class IcoPlanetMesh extends BABYLON.TransformNode {
   constructor(name: string = 'planet', options: PlanetMeshOptions, scene: BABYLON.Scene) {
     super(name)
     this._scene = scene
-    this._subdivisions = Math.min(options.subdivisions || 4, 50)
+    this._subdivisions = Math.min(options.subdivisions || 4, 128)
 
     this.buildMeshes()
     this.setInspectableProperties()
@@ -51,7 +51,7 @@ class IcoPlanetMesh extends BABYLON.TransformNode {
   }
 
   protected generateFaces(scene: BABYLON.Scene) {
-    this.planetMesh = BABYLON.MeshBuilder.CreateIcoSphere(this.name, { subdivisions: this.subdivisions }, scene)
+    this.planetMesh = BABYLON.MeshBuilder.CreateIcoSphere(this.name, { flat: false, subdivisions: this.subdivisions }, scene)
     this.planetMesh.setParent(this)
     // this.smoothNormalsOfSphereMesh(this.planetMesh)
   }
@@ -121,7 +121,7 @@ class IcoPlanetMesh extends BABYLON.TransformNode {
         propertyName: "subdivisions",
         type: BABYLON.InspectableType.Slider,
         min: 3,
-        max: 10,
+        max: 128,
         step: 1
       }
     ]
