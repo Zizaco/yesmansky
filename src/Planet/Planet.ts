@@ -1,5 +1,6 @@
 import * as BABYLON from "babylonjs"
 import { PlanetMesh } from './PlanetMesh'
+import OpenSimplexNoise from 'open-simplex-noise';
 
 /**
  * @see https://www.redblobgames.com/maps/terrain-from-noise/
@@ -14,10 +15,45 @@ class Planet {
 
     // this.mesh = BABYLON.MeshBuilder.CreateSphere("sphere", options, scene);
     this.mesh = new PlanetMesh('myPlanet', options as any, scene)
+    // this.mesh.material = this.generateMaterialOld(scene)
     this.mesh.material = this.generateMaterial(scene)
   }
 
+  /**
+   * New procedural material generation
+   */
   protected generateMaterial (scene) : BABYLON.Material {
+    const textureResolution = 512
+    const blueprint = {
+      diff: new BABYLON.DynamicTexture("texture", textureResolution, scene, true),
+    }
+
+    const grassDrawContext = blueprint.diff.getContext();
+    const imageData = grassDrawContext.createImageData(512, 512);
+    const openSimplex = new OpenSimplexNoise(Date.now());
+    for (let x = 0; x < 512; x++) {
+      for (let y = 0; y < 512; y++) {
+        const i = (x + y * 512) * 4;
+        const value = (openSimplex.noise2D(x/10, y/10) + 1) * 128;
+        imageData.data[i] = value;
+        imageData.data[i + 1] = value;
+        imageData.data[i + 2] = value;
+        imageData.data[i + 3] = 255;
+      }
+    }
+
+    grassDrawContext.putImageData(imageData, 0, 0);
+    blueprint.diff.update();
+    const material = new BABYLON.StandardMaterial("planet", scene);
+    material.diffuseTexture = blueprint.diff
+    material.diffuseColor = new BABYLON.Color3(0.8, 0.26, 0.4)
+    material.specularColor = new BABYLON.Color3(0.2, 0.2, 0.2);
+    material.specularPower = 14
+
+    return material
+  }
+
+  protected generateMaterialOld (scene) : BABYLON.Material {
     const textureResolution = 512
     const blueprint = {
       diff: new BABYLON.DynamicTexture("dynamic grass", textureResolution, scene, true),
