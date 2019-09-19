@@ -4,7 +4,7 @@ import OpenSimplexNoise from 'open-simplex-noise';
 
 type PlanetMeshOptions = { subdivisions?: number }
 
-class PlanetMesh extends BABYLON.TransformNode {
+class IcoPlanetMesh extends BABYLON.TransformNode {
   planetMesh: BABYLON.Mesh
   faces: Array<BABYLON.Mesh>
   _scene: BABYLON.Scene
@@ -14,7 +14,7 @@ class PlanetMesh extends BABYLON.TransformNode {
   constructor(name: string = 'planet', options: PlanetMeshOptions, scene: BABYLON.Scene) {
     super(name)
     this._scene = scene
-    this._subdivisions = options.subdivisions || 10
+    this._subdivisions = Math.min(options.subdivisions || 4, 50)
 
     this.buildMeshes()
     this.setInspectableProperties()
@@ -43,36 +43,17 @@ class PlanetMesh extends BABYLON.TransformNode {
   }
 
   protected deleteFaces() {
-    if (!this.faces) {
+    if (!this.planetMesh) {
       return
-    }
-
-    for (let i = 0; i < 6; i++) {
-      this.faces[i].dispose()
     }
 
     this.planetMesh.dispose()
   }
 
   protected generateFaces(scene: BABYLON.Scene) {
-    this.faces = []
-
-    for (let i = 0; i < 6; i++) {
-      this.faces[i] = BABYLON.MeshBuilder.CreateGround(
-        `${this.name}Face${i}`,
-        { width: 1, height: 1, subdivisions: this.subdivisions, updatable: true },
-        scene
-      );
-      this.uvmapFace(this.faces[i], i)
-      this.spherizeFace(this.faces[i])
-      this.translateFace(this.faces[i], i)
-      this.faces[i].setParent(this)
-      this.faces[i].isVisible = false
-    }
-
-    this.planetMesh = BABYLON.Mesh.MergeMeshes(this.faces, false, this.subdivisions > 100)
+    this.planetMesh = BABYLON.MeshBuilder.CreateIcoSphere(this.name, { subdivisions: this.subdivisions }, scene)
     this.planetMesh.setParent(this)
-    this.smoothNormalsOfSphereMesh(this.planetMesh)
+    // this.smoothNormalsOfSphereMesh(this.planetMesh)
   }
 
   /**
@@ -130,11 +111,6 @@ class PlanetMesh extends BABYLON.TransformNode {
   }
 
   protected applyMaterial() {
-    if (this._material) {
-      for (let i = 0; i < 6; i++) {
-        this.faces[i].material = this._material
-      }
-    }
     this.planetMesh.material = this._material
   }
 
@@ -145,11 +121,11 @@ class PlanetMesh extends BABYLON.TransformNode {
         propertyName: "subdivisions",
         type: BABYLON.InspectableType.Slider,
         min: 3,
-        max: 256,
+        max: 10,
         step: 1
       }
     ]
   }
 }
 
-export { PlanetMesh }
+export { IcoPlanetMesh }
