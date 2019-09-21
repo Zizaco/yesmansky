@@ -28,7 +28,7 @@ class Game {
       new BABYLON.Vector3(0, 1, 0),
       this.scene);
 
-    (window as any).planet = new Planet(this.scene)
+    (window as any).planet = new Planet('planet', this.scene)
     // const mesh = BABYLON.MeshBuilder.CreateGround("mesh", {}, this.scene);
 
     this.scene.debugLayer.show({ embedMode: true, overlay: true });

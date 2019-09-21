@@ -11,7 +11,7 @@ class PlanetMesh extends BABYLON.TransformNode {
   _subdivisions: number
   _material: BABYLON.Material
 
-  constructor(name: string = 'planet', options: PlanetMeshOptions, scene: BABYLON.Scene) {
+  constructor(name: string = 'planetMesh', options: PlanetMeshOptions, scene: BABYLON.Scene) {
     super(name)
     this._scene = scene
     this._subdivisions = options.subdivisions || 10

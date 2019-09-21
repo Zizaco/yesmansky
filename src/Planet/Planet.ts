@@ -1,30 +1,43 @@
 import * as BABYLON from "babylonjs"
 import { PlanetMesh } from './PlanetMesh'
 import OpenSimplexNoise from 'open-simplex-noise'
+import { convolute } from "../Filters/convolute"
 
 type VertexNormals = BABYLON.FloatArray
 type VertexUV = BABYLON.FloatArray
+const normalize = (val, min, max) => ((val - min) / (max - min))
 
 /**
  * @see https://www.redblobgames.com/maps/terrain-from-noise/
  * @see https://www.redblobgames.com/maps/mapgen4/
  */
-class Planet {
+class Planet extends BABYLON.TransformNode {
   seed: string
   mesh: PlanetMesh
   scene: BABYLON.Scene
 
-  constructor(scene) {
+  constructor(name: string = 'planet', scene) {
+    super(name)
     this.scene = scene
-    const options = { diameter: 1, diameterX: 1, subdivisions: 512 }
+    const options = { diameter: 1, diameterX: 1, subdivisions: 256 }
 
-    // this.mesh = BABYLON.MeshBuilder.CreateSphere("sphere", options, scene);
     this.mesh = new PlanetMesh('myPlanet', options as any, scene)
-    // this.mesh.material = this.generateMaterialOld(scene)
+    this.mesh.setParent(this)
+
     setTimeout(() => {
       this.mesh.material = this.generateMaterial(scene)
       this.mesh.subdivisions = 30
     }, 100)
+
+    this.setInspectableProperties()
+  }
+
+  set subdivisions(value: number) {
+    this.mesh.subdivisions = value
+  }
+
+  get subdivisions(): number {
+    return this.mesh.subdivisions
   }
 
   /**
@@ -35,7 +48,8 @@ class Planet {
     const uv = this.mesh.planetMesh.getVerticesData(BABYLON.VertexBuffer.UVKind)
     const material = new BABYLON.StandardMaterial("planet", scene);
 
-    material.diffuseTexture = this.generateDiffuseTexture(normals, uv)
+    // material.bumpTexture = this.generateNormalMap(this.generateHeightMap(normals, uv), normals, uv)
+    material.diffuseTexture = this.generateHeightMap(normals, uv)
     material.specularColor = new BABYLON.Color3(0.2, 0.2, 0.2);
     // material.bumpTexture = new BABYLON.Texture("textures/planetNormal.png", scene)
     material.diffuseColor = new BABYLON.Color3(0.8, 0.26, 0.4)
@@ -45,8 +59,60 @@ class Planet {
     return material
   }
 
-  generateDiffuseTexture(normals: VertexNormals, uv: VertexUV) {
-    const TEX_RES = 2048
+  generateNormalMap(heightMap: BABYLON.DynamicTexture, normals: VertexNormals, uv: VertexUV): BABYLON.Texture {
+    const TEX_RES = 512
+
+    const texture = new BABYLON.DynamicTexture("texture", TEX_RES, this.scene, false)
+    const normalCtx = heightMap.getContext();
+    const ctx = texture.getContext();
+
+    const pixelWidth = Math.ceil(TEX_RES / 4 / this.mesh.subdivisions)
+    const pixelHeight = Math.ceil(TEX_RES / 3 / this.mesh.subdivisions)
+    const sobel = 1
+
+    const numberOfVertices = normals.length / 3
+    // const numberOfVertices = Math.min(normals.length / 3, 2500)
+    ctx.fillStyle = `rgb(128,128,255)`
+    // ctx.fillRect(0, 0, TEX_RES, TEX_RES)
+
+    for (let i = 300; i < numberOfVertices; i++) {
+      const ImageData = normalCtx.getImageData(
+        TEX_RES * uv[i * 2] - 1,
+        TEX_RES * uv[i * 2 + 1] - 1,
+        3,
+        3
+      );
+
+      const sy = ImageData.data[0 * 4] +
+        ImageData.data[1 * 4] +
+        ImageData.data[2 * 4] -
+        ImageData.data[6 * 4] -
+        ImageData.data[7 * 4] -
+        ImageData.data[8 * 4];
+
+      const sx = ImageData.data[0 * 4] +
+        ImageData.data[3 * 4] +
+        ImageData.data[6 * 4] -
+        ImageData.data[2 * 4] -
+        ImageData.data[5 * 4] -
+        ImageData.data[8 * 4];
+
+      const valueR = 128 + normalize(sy, 0, 255 * 3) * 255
+      const valueG = 128 + normalize(sx, 0, 255 * 3) * 255
+      // if (valueR != 0 && valueG != 0 ){
+        ctx.fillStyle = `rgb(${valueR}, ${valueG}, ${255})`
+        ctx.fillRect(TEX_RES * uv[i * 2] - pixelWidth / 2, TEX_RES * (uv[i * 2 + 1]) - pixelHeight / 2, pixelWidth, pixelHeight)
+      // }
+      // break;
+    }
+
+    texture.update();
+    return texture
+  }
+
+  generateHeightMap(normals: VertexNormals, uv: VertexUV): BABYLON.DynamicTexture {
+    const TEX_RES = 512
+    const settings = {layers: 12, strenght: 1, roughness: 0.6, resistance: 0.70, min: 0.5}
 
     const texture = new BABYLON.DynamicTexture("texture", TEX_RES, this.scene, false)
     const ctx = texture.getContext();
@@ -57,18 +123,44 @@ class Planet {
     const pixelHeight = Math.ceil(TEX_RES / 3 / this.mesh.subdivisions)
 
     const numberOfVertices = normals.length / 3
-    ctx.fillStyle = `rgb(128,128,128)`
+    // const numberOfVertices = Math.min(normals.length / 3, 2500)
+    ctx.fillStyle = `rgb(110,110,110)`
     ctx.fillRect(0, 0, TEX_RES, TEX_RES)
 
     for (let i = 0; i < numberOfVertices; i++) {
+      let roughness = settings.roughness
+      let strength = settings.strenght
+      let value = 0
       const [x, y, z] = [normals[i * 3], normals[i * 3 + 1], normals[i * 3 + 2]]
-      const value = (openSimplex.noise3D(x * 256, y * 256, z * 256) + 1) * 128;
+      for (let layer = 0; layer < settings.layers; layer++) {
+        value += openSimplex.noise3D(x * roughness, y * roughness, z * roughness) * strength;
+        roughness = roughness * 2
+        strength = strength * settings.resistance
+        // console.log(roughness)
+      }
+      // console.log(value, settings.min)
+      value = Math.max(value * 128 + 128, 255 * settings.min)
+      value = normalize(value, 255 * settings.min, 255) * 255
       ctx.fillStyle = `rgb(${value}, ${value}, ${value})`
       ctx.fillRect(TEX_RES * uv[i * 2] - pixelWidth / 2, TEX_RES * (1 - uv[i * 2 + 1]) - pixelHeight / 2, pixelWidth, pixelHeight)
+      // break
     }
 
     texture.update();
     return texture
+  }
+
+  protected setInspectableProperties() {
+    this.inspectableCustomProperties = [
+      {
+        label: "Subdivisions",
+        propertyName: "subdivisions",
+        type: BABYLON.InspectableType.Slider,
+        min: 3,
+        max: 256,
+        step: 1
+      }
+    ]
   }
 }
 
