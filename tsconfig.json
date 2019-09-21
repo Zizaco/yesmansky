@@ -3,6 +3,8 @@
         "allowSyntheticDefaultImports": true,
         "target": "es6",
         "module": "commonjs",
+        "outDir": "out",
+        "sourceMap": true,
         "moduleResolution": "node"
     },
     "include": [
