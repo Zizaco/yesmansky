@@ -1,6 +1,7 @@
 import { Game } from "./Game";
 import * as localforage from 'localforage';
 import * as BABYLON from "babylonjs";
+import { PlanetTextureFactory } from "./Texture/PlanetTextureFactory";
 
 declare global {
   interface Window {
@@ -18,4 +19,5 @@ if (process.env.NODE_ENV === 'development') {
 const view = document.getElementById("view") as HTMLCanvasElement;
 view.width = window.innerWidth
 view.height = window.innerHeight
-window.game = new Game(view)
+// window.game = new Game(view)
+new PlanetTextureFactory(view, 1024)
