@@ -20,4 +20,4 @@ const view = document.getElementById("view") as HTMLCanvasElement;
 view.width = window.innerWidth
 view.height = window.innerHeight
 // window.game = new Game(view)
-new PlanetTextureFactory(view, 1024)
+new PlanetTextureFactory(view, 512)

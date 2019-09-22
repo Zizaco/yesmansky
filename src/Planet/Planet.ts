@@ -19,7 +19,7 @@ class Planet extends BABYLON.TransformNode {
   constructor(name: string = 'planet', scene) {
     super(name)
     this.scene = scene
-    const options = { diameter: 1, diameterX: 1, subdivisions: 256 }
+    const options = { diameter: 1, diameterX: 1, subdivisions: 90 }
 
     this.mesh = new PlanetMesh('myPlanet', options as any, scene)
     this.mesh.setParent(this)
@@ -48,8 +48,9 @@ class Planet extends BABYLON.TransformNode {
     const uv = this.mesh.planetMesh.getVerticesData(BABYLON.VertexBuffer.UVKind)
     const material = new BABYLON.StandardMaterial("planet", scene);
 
-    // material.bumpTexture = this.generateNormalMap(this.generateHeightMap(normals, uv), normals, uv)
-    material.diffuseTexture = this.generateHeightMap(normals, uv)
+    const heightMap = this.generateHeightMap(normals, uv)
+    material.bumpTexture = this.generateNormalMap(heightMap, normals, uv)
+    material.diffuseTexture = heightMap
     material.specularColor = new BABYLON.Color3(0.2, 0.2, 0.2);
     // material.bumpTexture = new BABYLON.Texture("textures/planetNormal.png", scene)
     material.diffuseColor = new BABYLON.Color3(0.8, 0.26, 0.4)
@@ -60,7 +61,7 @@ class Planet extends BABYLON.TransformNode {
   }
 
   generateNormalMap(heightMap: BABYLON.DynamicTexture, normals: VertexNormals, uv: VertexUV): BABYLON.Texture {
-    const TEX_RES = 512
+    const TEX_RES = 256
 
     const texture = new BABYLON.DynamicTexture("texture", TEX_RES, this.scene, false)
     const normalCtx = heightMap.getContext();
@@ -111,7 +112,7 @@ class Planet extends BABYLON.TransformNode {
   }
 
   generateHeightMap(normals: VertexNormals, uv: VertexUV): BABYLON.DynamicTexture {
-    const TEX_RES = 512
+    const TEX_RES = 256
     const settings = {layers: 12, strenght: 1, roughness: 0.6, resistance: 0.70, min: 0.5}
 
     const texture = new BABYLON.DynamicTexture("texture", TEX_RES, this.scene, false)
