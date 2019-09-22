@@ -49,11 +49,12 @@ class Planet extends BABYLON.TransformNode {
     const material = new BABYLON.StandardMaterial("planet", scene);
 
     const heightMap = this.generateHeightMap(normals, uv)
-    material.bumpTexture = this.generateNormalMap(heightMap, normals, uv)
-    material.diffuseTexture = heightMap
+    // material.bumpTexture = this.generateNormalMap(heightMap, normals, uv)
+    material.bumpTexture = heightMap
+    // material.diffuseTexture = heightMap
     material.specularColor = new BABYLON.Color3(0.2, 0.2, 0.2);
     // material.bumpTexture = new BABYLON.Texture("textures/planetNormal.png", scene)
-    material.diffuseColor = new BABYLON.Color3(0.8, 0.26, 0.4)
+    // material.diffuseColor = new BABYLON.Color3(0.8, 0.26, 0.4)
     // material.emissiveColor = new BABYLON.Color3(1, 1, 1);
     material.specularPower = 14
 
