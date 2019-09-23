@@ -19,5 +19,5 @@ if (process.env.NODE_ENV === 'development') {
 const view = document.getElementById("view") as HTMLCanvasElement;
 view.width = window.innerWidth
 view.height = window.innerHeight
-// window.game = new Game(view)
-new PlanetTextureFactory(view, 512)
+window.game = new Game(view)
+// new PlanetTextureFactory(view, 512)

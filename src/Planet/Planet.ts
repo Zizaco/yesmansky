@@ -48,9 +48,9 @@ class Planet extends BABYLON.TransformNode {
     const uv = this.mesh.planetMesh.getVerticesData(BABYLON.VertexBuffer.UVKind)
     const material = new BABYLON.StandardMaterial("planet", scene);
 
-    const heightMap = this.generateHeightMap(normals, uv)
+    // const heightMap = this.generateHeightMap(normals, uv)
     // material.bumpTexture = this.generateNormalMap(heightMap, normals, uv)
-    material.bumpTexture = heightMap
+    material.diffuseTexture = new BABYLON.Texture("textures/planetObjectSpaceNormal.png", scene, true)
     // material.diffuseTexture = heightMap
     material.specularColor = new BABYLON.Color3(0.2, 0.2, 0.2);
     // material.bumpTexture = new BABYLON.Texture("textures/planetNormal.png", scene)

@@ -61,8 +61,12 @@ class PlanetTextureFactory {
         const angle = radiansToDegrees(angleBetween(x, y * width / height, center.x, center.y * width / height))
         const perpendicular = Math.sqrt(1-Math.pow(normalize(distance, 0, maxDist*1.5),2))
         const normalizedAngle = normalize(angle, 0, 180) * Math.PI
-        const paintRed = Math.cos(normalizedAngle) * (1-perpendicular) + 0.5
-        const paintGreen = Math.cos(normalizedAngle + Math.PI / 2) * (1-perpendicular) + 0.5
+        let paintRed = Math.cos(normalizedAngle) * (1-perpendicular) + 0.5
+        let paintGreen = Math.cos(normalizedAngle + Math.PI / 2) * (1-perpendicular) + 0.5
+
+        if (side < 4) {
+          paintRed = paintRed + Math.PI/16*-(side-1)
+        }
 
         // this.ctx.fillStyle = `rgb(${255 * paintRed}, ${255 * paintGreen}, ${255 * perpendicular})`
         this.ctx.fillStyle = `rgb(${255 * paintRed}, ${255 * paintRed}, ${255 * paintRed})`
