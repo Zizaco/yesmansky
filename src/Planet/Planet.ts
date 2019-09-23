@@ -47,10 +47,10 @@ class Planet extends BABYLON.TransformNode {
     const uv = this.mesh.planetMesh.getVerticesData(BABYLON.VertexBuffer.UVKind)
     const material = new BABYLON.StandardMaterial("planet", scene);
 
-    // const heightMap = this.generateHeightMap(normals, uv)
+    const heightMap = this.generateHeightMap(normals, uv)
     // material.bumpTexture = this.generateNormalMap(heightMap, normals, uv)
-    material.diffuseTexture = new BABYLON.Texture("textures/planetObjectSpaceNormal.png", scene, true)
-    // material.diffuseTexture = heightMap
+    // material.diffuseTexture = new BABYLON.Texture("textures/planetObjectSpaceNormal.png", scene, true)
+    material.diffuseTexture = heightMap
     material.specularColor = new BABYLON.Color3(0.2, 0.2, 0.2);
     // material.bumpTexture = new BABYLON.Texture("textures/planetNormal.png", scene)
     // material.diffuseColor = new BABYLON.Color3(0.8, 0.26, 0.4)
@@ -74,39 +74,59 @@ class Planet extends BABYLON.TransformNode {
   }
 
   generateHeightMap(normals: VertexNormals, uv: VertexUV): BABYLON.DynamicTexture {
-    const TEX_RES = 256
-    const settings = {layers: 12, strenght: 1, roughness: 0.6, resistance: 0.70, min: 0.5}
+    const TEX_RES = 2048
+    // const settings = { layers: 12, strength: 1, roughness: 0.6, resistance: 0.70, min: 0.5 }
+    const settings = { layers: 12, strength: 1, roughness: 0.6, resistance: 0.70, min: 0.4 }
 
-    const texture = new BABYLON.DynamicTexture("texture", TEX_RES, this.scene, false)
+    const texture = new BABYLON.DynamicTexture("planetHeightMap", TEX_RES, this.scene, true)
     const ctx = texture.getContext();
 
     const openSimplex = new OpenSimplexNoise(Date.now());
+    const sphereNormalTexture = new Image();
+    sphereNormalTexture.src = 'textures/planetObjectSpaceNormal.png';
+    sphereNormalTexture.onload = function () {
+      console.time('generateHeightMap')
+      ctx.drawImage(this as CanvasImageSource, 0, 0, TEX_RES, TEX_RES)
+      const sphereNormals = ctx.getImageData(0, 0, TEX_RES, TEX_RES).data
 
-    const pixelWidth = Math.ceil(TEX_RES / 4 / this.mesh.subdivisions)
-    const pixelHeight = Math.ceil(TEX_RES / 3 / this.mesh.subdivisions)
+      const numberOfPixels = sphereNormals.length / 4
+      ctx.fillStyle = `rgb(0,0,0)`
+      // ctx.fillRect(0, 0, TEX_RES, TEX_RES)
 
-    const numberOfVertices = normals.length / 3
-    // const numberOfVertices = Math.min(normals.length / 3, 2500)
-    ctx.fillStyle = `rgb(110,110,110)`
-    ctx.fillRect(0, 0, TEX_RES, TEX_RES)
-
-    for (let i = 0; i < numberOfVertices; i++) {
-      let roughness = settings.roughness
-      let strength = settings.strenght
-      let value = 0
-      const [x, y, z] = [normals[i * 3], normals[i * 3 + 1], normals[i * 3 + 2]]
-      for (let layer = 0; layer < settings.layers; layer++) {
-        value += openSimplex.noise3D(x * roughness, y * roughness, z * roughness) * strength;
-        roughness = roughness * 2
-        strength = strength * settings.resistance
+      for (let i = 0; i < numberOfPixels; i++) {
+        const a = i*4
+        const [x, y] = [((i - 1) % TEX_RES) + 1, Math.max(0, Math.floor((i - 1) / TEX_RES))]
+        let roughness = settings.roughness/100
+        let strength = settings.strength
+        let value = 0
+        const [r, g, b] = [
+          sphereNormals[a] + Math.random() * 1.5,// + x % 3 / 4,
+          sphereNormals[a + 1] + Math.random() * 1.5,// + y % 3 / 4,
+          sphereNormals[a + 2]
+        ]
+        if (r+g+b===0) {
+          continue
+        }
+        for (let layer = 0; layer < settings.layers; layer++) {
+          value += openSimplex.noise3D(r * roughness, g * roughness, b * roughness) * strength;
+          roughness = roughness * 2
+          strength = strength * settings.resistance
+        }
+        // value += Math.random()/6
+        value = Math.max(value * 128 + 128, 255 * settings.min)
+        value = normalize(value, 255 * settings.min, 255) * 255
+        if (value===0) {
+          continue
+        }
+        ctx.fillStyle = `rgb(${value}, ${value}, ${value})`
+        // ctx.fillStyle = `rgb(${r}, ${g}, ${b})`
+        ctx.fillRect(x, y, 1, 1)
       }
-      value = Math.max(value * 128 + 128, 255 * settings.min)
-      value = normalize(value, 255 * settings.min, 255) * 255
-      ctx.fillStyle = `rgb(${value}, ${value}, ${value})`
-      ctx.fillRect(TEX_RES * uv[i * 2] - pixelWidth / 2, TEX_RES * (1 - uv[i * 2 + 1]) - pixelHeight / 2, pixelWidth, pixelHeight)
+
+      texture.update();
+      console.timeEnd('generateHeightMap')
     }
 
-    texture.update();
     return texture
   }
 
