@@ -26,7 +26,6 @@ class Planet extends BABYLON.TransformNode {
 
     setTimeout(() => {
       this.mesh.material = this.generateMaterial(scene)
-      this.mesh.subdivisions = 30
     }, 100)
 
     this.setInspectableProperties()
@@ -68,45 +67,7 @@ class Planet extends BABYLON.TransformNode {
     const normalCtx = heightMap.getContext();
     const ctx = texture.getContext();
 
-    const pixelWidth = Math.ceil(TEX_RES / 4 / this.mesh.subdivisions)
-    const pixelHeight = Math.ceil(TEX_RES / 3 / this.mesh.subdivisions)
-    const sobel = 1
-
-    const numberOfVertices = normals.length / 3
-    // const numberOfVertices = Math.min(normals.length / 3, 2500)
-    ctx.fillStyle = `rgb(128,128,255)`
-    // ctx.fillRect(0, 0, TEX_RES, TEX_RES)
-
-    for (let i = 300; i < numberOfVertices; i++) {
-      const ImageData = normalCtx.getImageData(
-        TEX_RES * uv[i * 2] - 1,
-        TEX_RES * uv[i * 2 + 1] - 1,
-        3,
-        3
-      );
-
-      const sy = ImageData.data[0 * 4] +
-        ImageData.data[1 * 4] +
-        ImageData.data[2 * 4] -
-        ImageData.data[6 * 4] -
-        ImageData.data[7 * 4] -
-        ImageData.data[8 * 4];
-
-      const sx = ImageData.data[0 * 4] +
-        ImageData.data[3 * 4] +
-        ImageData.data[6 * 4] -
-        ImageData.data[2 * 4] -
-        ImageData.data[5 * 4] -
-        ImageData.data[8 * 4];
-
-      const valueR = 128 + normalize(sy, 0, 255 * 3) * 255
-      const valueG = 128 + normalize(sx, 0, 255 * 3) * 255
-      // if (valueR != 0 && valueG != 0 ){
-        ctx.fillStyle = `rgb(${valueR}, ${valueG}, ${255})`
-        ctx.fillRect(TEX_RES * uv[i * 2] - pixelWidth / 2, TEX_RES * (uv[i * 2 + 1]) - pixelHeight / 2, pixelWidth, pixelHeight)
-      // }
-      // break;
-    }
+    // todo
 
     texture.update();
     return texture
@@ -138,14 +99,11 @@ class Planet extends BABYLON.TransformNode {
         value += openSimplex.noise3D(x * roughness, y * roughness, z * roughness) * strength;
         roughness = roughness * 2
         strength = strength * settings.resistance
-        // console.log(roughness)
       }
-      // console.log(value, settings.min)
       value = Math.max(value * 128 + 128, 255 * settings.min)
       value = normalize(value, 255 * settings.min, 255) * 255
       ctx.fillStyle = `rgb(${value}, ${value}, ${value})`
       ctx.fillRect(TEX_RES * uv[i * 2] - pixelWidth / 2, TEX_RES * (1 - uv[i * 2 + 1]) - pixelHeight / 2, pixelWidth, pixelHeight)
-      // break
     }
 
     texture.update();
