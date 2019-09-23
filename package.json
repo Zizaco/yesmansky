@@ -12,6 +12,7 @@
   "dependencies": {
     "babylonjs": "^4.0.3",
     "localforage": "^1.7.3",
+    "mobile-detect": "^1.4.4",
     "open-simplex-noise": "^1.6.0"
   },
   "devDependencies": {

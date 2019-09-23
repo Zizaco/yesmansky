@@ -2,6 +2,7 @@ import * as BABYLON from "babylonjs"
 import { PlanetMesh } from './PlanetMesh'
 import OpenSimplexNoise from 'open-simplex-noise'
 import { convolute } from "../Filters/convolute"
+import { HardwareInfo } from "../Infrastructure/HardwareInfo"
 
 type VertexNormals = BABYLON.FloatArray
 type VertexUV = BABYLON.FloatArray
@@ -74,7 +75,7 @@ class Planet extends BABYLON.TransformNode {
   }
 
   generateHeightMap(normals: VertexNormals, uv: VertexUV): BABYLON.DynamicTexture {
-    const TEX_RES = 2048
+    const TEX_RES = HardwareInfo.isMobile() ? 512 : 2048
     // const settings = { layers: 12, strength: 1, roughness: 0.6, resistance: 0.70, min: 0.5 }
     const settings = { layers: 10, strength: 0.8, roughness: 0.6, resistance: 0.70, min: 0.5 }
     const baseRoughness = settings.roughness / 100
