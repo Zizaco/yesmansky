@@ -8,6 +8,7 @@ class PlanetMaterial {
   scene: BABYLON.Scene
   _raw: BABYLON.StandardMaterial
   heightMap: BABYLON.DynamicTexture
+  specularMap: BABYLON.DynamicTexture
 
   constructor(name: string = 'planetTexture', options: any, scene: BABYLON.Scene) {
     this.scene = scene
@@ -27,10 +28,11 @@ class PlanetMaterial {
   protected generateMaterial(scene): BABYLON.Material {
     this._raw = new BABYLON.StandardMaterial("planet", scene);
 
-    const heightMap = this.generateHeightMap()
+    this.generateBaseTextures()
     // material.bumpTexture = this.generateNormalMap(heightMap, normals, uv)
     // material.diffuseTexture = new BABYLON.Texture("textures/planetObjectSpaceNormal.png", scene, true)
-    this._raw.diffuseTexture = heightMap
+    this._raw.diffuseTexture = this.heightMap
+    this._raw.specularTexture = this.specularMap
     this._raw.specularColor = new BABYLON.Color3(0.2, 0.2, 0.2);
     // material.bumpTexture = new BABYLON.Texture("textures/planetNormal.png", scene)
     // material.diffuseColor = new BABYLON.Color3(0.8, 0.26, 0.4)
@@ -40,31 +42,38 @@ class PlanetMaterial {
     return this._raw
   }
 
-  generateHeightMap(): BABYLON.DynamicTexture {
+  generateBaseTextures(): BABYLON.DynamicTexture {
     const TEX_RES = HardwareInfo.isMobile() ? 512 : (HardwareInfo.hasGoodVideoCard() ? 2048 : 1024)
-    // const settings = { layers: 12, strength: 1, roughness: 0.6, resistance: 0.70, min: 0.5 }
     const settings = { layers: 10, strength: 0.8, roughness: 0.6, resistance: 0.70, min: 0.5 }
     const baseRoughness = settings.roughness / 100
 
-    const texture = new BABYLON.DynamicTexture("planetHeightMap", TEX_RES, this.scene, true)
-    const ctx = texture.getContext();
+    this.heightMap = new BABYLON.DynamicTexture("planetHeightMap", TEX_RES, this.scene, true)
+    this.specularMap = new BABYLON.DynamicTexture("planetSpecularMap", TEX_RES, this.scene, true)
+    const heightMapCtx = this.heightMap.getContext();
+    const specularMapCtx = this.specularMap.getContext();
 
     const openSimplex = new OpenSimplexNoise(27);
     const sphereNormalTexture = new Image();
     sphereNormalTexture.src = 'textures/planetObjectSpaceNormal.png';
-    sphereNormalTexture.onload = function () {
-      console.time('generateHeightMap')
-      ctx.drawImage(this as CanvasImageSource, 0, 0, TEX_RES, TEX_RES)
-      const sphereNormalImage = ctx.getImageData(0, 0, TEX_RES, TEX_RES)
-      const sphereNormals = sphereNormalImage.data
-      const numberOfPixels = sphereNormals.length / 4
+    sphereNormalTexture.onload = () => {
+      console.time('generateBaseTextures')
+
+      heightMapCtx.drawImage(sphereNormalTexture as CanvasImageSource, 0, 0, TEX_RES, TEX_RES)
+      const heightMapImage = heightMapCtx.getImageData(0, 0, TEX_RES, TEX_RES)
+      const heightData = heightMapImage.data
+      const numberOfPixels = heightData.length / 4
+
+      specularMapCtx.fillStyle = 'rgb(0,0,0)'
+      specularMapCtx.fillRect(0, 0, TEX_RES, TEX_RES)
+      const specularMapImage = specularMapCtx.getImageData(0, 0, TEX_RES, TEX_RES)
+      const specularData = specularMapImage.data
 
       for (let i = 0; i < numberOfPixels; i++) {
         const a = i * 4
         let [r, g, b] = [
-          sphereNormals[a],
-          sphereNormals[a + 1],
-          sphereNormals[a + 2]
+          heightData[a],
+          heightData[a + 1],
+          heightData[a + 2]
         ]
         if (r + g + b === 0) {
           continue
@@ -88,18 +97,21 @@ class PlanetMaterial {
         value = Math.max(value * 128 + 128, 255 * settings.min)
         value = normalize(value, 255 * settings.min, 255) * 255
         if (value <= 1) {
-          sphereNormals[a] = sphereNormals[a + 1] = sphereNormals[a + 2] = 40
+          heightData[a] = heightData[a + 1] = heightData[a + 2] = 20
+          specularData[a] = specularData[a + 1] = specularData[a+2] = 100
         } else {
-          sphereNormals[a] = sphereNormals[a + 1] = sphereNormals[a + 2] = value
+          heightData[a] = heightData[a + 1] = heightData[a + 2] = value
         }
       }
 
-      ctx.putImageData(sphereNormalImage, 0, 0);
-      texture.update();
-      console.timeEnd('generateHeightMap')
+      heightMapCtx.putImageData(heightMapImage, 0, 0);
+      specularMapCtx.putImageData(specularMapImage, 0, 0);
+      this.heightMap.update();
+      this.specularMap.update();
+      console.timeEnd('generateBaseTextures')
     }
 
-    return texture
+    return this.heightMap
   }
 
   generateNormalMap(heightMap: BABYLON.DynamicTexture): BABYLON.Texture {
