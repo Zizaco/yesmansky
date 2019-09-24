@@ -8,6 +8,7 @@ class PlanetMaterial {
   scene: BABYLON.Scene
   _raw: BABYLON.StandardMaterial
   heightMap: BABYLON.DynamicTexture
+  diffuseMap: BABYLON.DynamicTexture
   specularMap: BABYLON.DynamicTexture
 
   constructor(name: string = 'planetTexture', options: any, scene: BABYLON.Scene) {
@@ -31,7 +32,8 @@ class PlanetMaterial {
     this.generateBaseTextures()
     // material.bumpTexture = this.generateNormalMap(heightMap, normals, uv)
     // material.diffuseTexture = new BABYLON.Texture("textures/planetObjectSpaceNormal.png", scene, true)
-    this._raw.diffuseTexture = this.heightMap
+    // this._raw.diffuseTexture = this.heightMap
+    this._raw.diffuseTexture = this.diffuseMap
     this._raw.specularTexture = this.specularMap
     this._raw.specularColor = new BABYLON.Color3(0.2, 0.2, 0.2);
     // material.bumpTexture = new BABYLON.Texture("textures/planetNormal.png", scene)
@@ -49,10 +51,15 @@ class PlanetMaterial {
 
     this.heightMap = new BABYLON.DynamicTexture("planetHeightMap", TEX_RES, this.scene, true)
     this.specularMap = new BABYLON.DynamicTexture("planetSpecularMap", TEX_RES, this.scene, true)
+    this.diffuseMap = new BABYLON.DynamicTexture("planetDiffuseMap", TEX_RES, this.scene, true)
     const heightMapCtx = this.heightMap.getContext();
     const specularMapCtx = this.specularMap.getContext();
+    const diffuseMapCtx = this.diffuseMap.getContext();
 
     const openSimplex = new OpenSimplexNoise(27);
+    const colorGradient = new Image();
+    colorGradient.src = 'textures/earthgradient.png';
+
     const sphereNormalTexture = new Image();
     sphereNormalTexture.src = 'textures/planetObjectSpaceNormal.png';
     sphereNormalTexture.onload = () => {
@@ -67,6 +74,11 @@ class PlanetMaterial {
       specularMapCtx.fillRect(0, 0, TEX_RES, TEX_RES)
       const specularMapImage = specularMapCtx.getImageData(0, 0, TEX_RES, TEX_RES)
       const specularData = specularMapImage.data
+
+      diffuseMapCtx.drawImage(colorGradient as CanvasImageSource, 0, 0, 256, 255)
+      const diffuseMapImage = diffuseMapCtx.getImageData(0, 0, TEX_RES, TEX_RES)
+      const diffuseData = diffuseMapImage.data
+      const colorGradientValues = diffuseData.slice(0, 256 * 4)
 
       for (let i = 0; i < numberOfPixels; i++) {
         const a = i * 4
@@ -95,19 +107,26 @@ class PlanetMaterial {
         }
 
         value = Math.max(value * 128 + 128, 255 * settings.min)
-        value = normalize(value, 255 * settings.min, 255) * 255
+        value = Math.round(normalize(value, 255 * settings.min, 255) * 255)
+        value = Math.min(value, 255)
         if (value <= 1) {
           heightData[a] = heightData[a + 1] = heightData[a + 2] = 20
           specularData[a] = specularData[a + 1] = specularData[a+2] = 100
         } else {
           heightData[a] = heightData[a + 1] = heightData[a + 2] = value
         }
+        diffuseData[a] = colorGradientValues[value * 4]
+        diffuseData[a + 1] = colorGradientValues[value * 4 + 1]
+        diffuseData[a + 2] = colorGradientValues[value * 4 + 2]
+        diffuseData[a + 3] = 255
       }
 
       heightMapCtx.putImageData(heightMapImage, 0, 0);
       specularMapCtx.putImageData(specularMapImage, 0, 0);
+      diffuseMapCtx.putImageData(diffuseMapImage, 0, 0);
       this.heightMap.update();
       this.specularMap.update();
+      this.diffuseMap.update();
       console.timeEnd('generateBaseTextures')
     }
 
