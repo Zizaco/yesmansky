@@ -1,14 +1,21 @@
 import * as BABYLON from "babylonjs";
 import * as localforage from 'localforage';
 import { Planet } from './Planet/Planet';
+import { HardwareInfo } from './Infrastructure/HardwareInfo';
 
 class Game {
   engine: BABYLON.Engine
   scene: BABYLON.Scene
 
   constructor(el: HTMLCanvasElement) {
-    this.engine = new BABYLON.Engine(el, true);
+    const engineOptions = {
+      antialias: false
+    }
+    window.game = this
+    this.engine = new BABYLON.Engine(el, undefined, engineOptions, false);
     this.scene = new BABYLON.Scene(this.engine);
+
+    this.setGraphicalSettings()
 
     const camera = new BABYLON.ArcRotateCamera(
       "camera",
@@ -37,6 +44,13 @@ class Game {
 
   render() {
     this.scene.render();
+  }
+
+  setGraphicalSettings() {
+    if (!HardwareInfo.hasGoodVideoCard()) {
+      this.engine.setHardwareScalingLevel(2)
+    }
+    this.engine.renderEvenInBackground = false
   }
 }
 
