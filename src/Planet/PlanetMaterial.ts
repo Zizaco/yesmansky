@@ -1,6 +1,7 @@
 import * as BABYLON from "babylonjs"
 import OpenSimplexNoise from 'open-simplex-noise'
 import { HardwareInfo } from "../Infrastructure/HardwareInfo"
+import { TextureBuilder } from './TextureBuilder'
 
 const normalize = (val, min, max) => ((val - min) / (max - min))
 
@@ -13,6 +14,11 @@ class PlanetMaterial {
 
   constructor(name: string = 'planetTexture', options: any, scene: BABYLON.Scene) {
     this.scene = scene
+    // setTimeout(() => {
+    //   const worker = new TextureBuilderWorker()
+    //   worker.postMessage({hello: 'world'})
+    //   worker.addEventListener("message", (event) => { console.log('message receive in main thread:', event)});
+    // }, 5000);
   }
 
   get raw(): BABYLON.StandardMaterial {
@@ -29,23 +35,36 @@ class PlanetMaterial {
   protected generateMaterial(scene): BABYLON.Material {
     this._raw = new BABYLON.StandardMaterial("planet", scene);
 
-    this.generateBaseTextures()
+    this.generateBaseTextures(256).then(() => {
+      this._raw.diffuseTexture = this.diffuseMap
+      this._raw.specularTexture = this.specularMap
+
+      this.generateBaseTextures(512).then(() => {
+        this._raw.diffuseTexture = this.diffuseMap
+        this._raw.specularTexture = this.specularMap
+
+        this.generateBaseTextures().then(() => {
+          this._raw.diffuseTexture = this.diffuseMap
+          this._raw.specularTexture = this.specularMap
+        })
+      })
+    })
+
+    this._raw.specularColor = new BABYLON.Color3(0.2, 0.2, 0.2);
+    this._raw.specularPower = 14
     // material.bumpTexture = this.generateNormalMap(heightMap, normals, uv)
     // material.diffuseTexture = new BABYLON.Texture("textures/planetObjectSpaceNormal.png", scene, true)
     // this._raw.diffuseTexture = this.heightMap
-    this._raw.diffuseTexture = this.diffuseMap
-    this._raw.specularTexture = this.specularMap
-    this._raw.specularColor = new BABYLON.Color3(0.2, 0.2, 0.2);
     // material.bumpTexture = new BABYLON.Texture("textures/planetNormal.png", scene)
     // material.diffuseColor = new BABYLON.Color3(0.8, 0.26, 0.4)
     // material.emissiveColor = new BABYLON.Color3(1, 1, 1);
-    this._raw.specularPower = 14
 
     return this._raw
   }
 
-  generateBaseTextures(): BABYLON.DynamicTexture {
-    const TEX_RES = HardwareInfo.isMobile() ? 512 : (HardwareInfo.hasGoodVideoCard() ? 2048 : 1024)
+  async generateBaseTextures(resolution?: number): Promise<BABYLON.DynamicTexture> {
+    const TEX_RES = resolution || (HardwareInfo.isMobile() ? 512 : (HardwareInfo.hasGoodVideoCard() ? 2048 : 1024))
+
     const settings = { layers: 10, strength: 0.8, roughness: 0.6, resistance: 0.70, min: 0.5 }
     const baseRoughness = settings.roughness / 100
 
@@ -58,79 +77,38 @@ class PlanetMaterial {
 
     const openSimplex = new OpenSimplexNoise(27);
     const colorGradient = new Image();
-    colorGradient.src = 'textures/earthgradient.png';
+    colorGradient.src = `textures/earthgradient.png`;
 
     const sphereNormalTexture = new Image();
-    sphereNormalTexture.src = 'textures/planetObjectSpaceNormal.png';
-    sphereNormalTexture.onload = () => {
-      console.time('generateBaseTextures')
+    sphereNormalTexture.src = `textures/planetObjectSpaceNormal.png`;
+    return new Promise((resolve) => {
+      sphereNormalTexture.onload = async () => {
+        console.time('generateBaseTextures')
 
-      heightMapCtx.drawImage(sphereNormalTexture as CanvasImageSource, 0, 0, TEX_RES, TEX_RES)
-      const heightMapImage = heightMapCtx.getImageData(0, 0, TEX_RES, TEX_RES)
-      const heightData = heightMapImage.data
-      const numberOfPixels = heightData.length / 4
+        heightMapCtx.drawImage(sphereNormalTexture as CanvasImageSource, 0, 0, TEX_RES, TEX_RES)
+        const heightMapImage = heightMapCtx.getImageData(0, 0, TEX_RES, TEX_RES)
 
-      specularMapCtx.fillStyle = 'rgb(0,0,0)'
-      specularMapCtx.fillRect(0, 0, TEX_RES, TEX_RES)
-      const specularMapImage = specularMapCtx.getImageData(0, 0, TEX_RES, TEX_RES)
-      const specularData = specularMapImage.data
+        specularMapCtx.fillStyle = 'rgb(0,0,0)'
+        specularMapCtx.fillRect(0, 0, TEX_RES, TEX_RES)
+        const specularMapImage = specularMapCtx.getImageData(0, 0, TEX_RES, TEX_RES)
 
-      diffuseMapCtx.drawImage(colorGradient as CanvasImageSource, 0, 0, 256, 255)
-      const diffuseMapImage = diffuseMapCtx.getImageData(0, 0, TEX_RES, TEX_RES)
-      const diffuseData = diffuseMapImage.data
-      const colorGradientValues = diffuseData.slice(0, 256 * 4)
+        diffuseMapCtx.drawImage(colorGradient as CanvasImageSource, 0, 0, 256, 255)
+        const diffuseMapImage = diffuseMapCtx.getImageData(0, 0, TEX_RES, TEX_RES)
 
-      for (let i = 0; i < numberOfPixels; i++) {
-        const a = i * 4
-        let [r, g, b] = [
-          heightData[a],
-          heightData[a + 1],
-          heightData[a + 2]
-        ]
-        if (r + g + b === 0) {
-          continue
-        }
+        const { heightDataResult, specularDataResult, diffuseDataResult } = await TextureBuilder.buildTextures(heightMapImage, specularMapImage, diffuseMapImage)
 
-        if (TEX_RES >= 1000) {
-          const minibump = Math.random() * 1.5
-          r += minibump
-          g += minibump
-        }
-
-        let roughness = baseRoughness
-        let strength = settings.strength
-        let value = 0
-        for (let layer = 0; layer < settings.layers; layer++) {
-          value += openSimplex.noise3D(r * roughness, g * roughness, b * roughness) * strength;
-          roughness = roughness * 2
-          strength = strength * settings.resistance
-        }
-
-        value = Math.max(value * 128 + 128, 255 * settings.min)
-        value = Math.round(normalize(value, 255 * settings.min, 255) * 255)
-        value = Math.min(value, 255)
-        if (value <= 1) {
-          heightData[a] = heightData[a + 1] = heightData[a + 2] = 20
-          specularData[a] = specularData[a + 1] = specularData[a+2] = 100
-        } else {
-          heightData[a] = heightData[a + 1] = heightData[a + 2] = value
-        }
-        diffuseData[a] = colorGradientValues[value * 4]
-        diffuseData[a + 1] = colorGradientValues[value * 4 + 1]
-        diffuseData[a + 2] = colorGradientValues[value * 4 + 2]
-        diffuseData[a + 3] = 255
+        console.log(heightDataResult.data[1500])
+        heightMapCtx.putImageData(heightMapImage, 0, 0);
+        specularMapCtx.putImageData(specularMapImage, 0, 0);
+        diffuseMapCtx.putImageData(diffuseMapImage, 0, 0);
+        this.heightMap.update();
+        this.specularMap.update();
+        this.diffuseMap.update();
+        console.timeEnd('generateBaseTextures')
+        console.log(TEX_RES)
+        resolve()
       }
-
-      heightMapCtx.putImageData(heightMapImage, 0, 0);
-      specularMapCtx.putImageData(specularMapImage, 0, 0);
-      diffuseMapCtx.putImageData(diffuseMapImage, 0, 0);
-      this.heightMap.update();
-      this.specularMap.update();
-      this.diffuseMap.update();
-      console.timeEnd('generateBaseTextures')
-    }
-
-    return this.heightMap
+    })
   }
 
   generateNormalMap(heightMap: BABYLON.DynamicTexture): BABYLON.Texture {
