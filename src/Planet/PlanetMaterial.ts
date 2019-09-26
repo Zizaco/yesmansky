@@ -1,11 +1,12 @@
 import * as BABYLON from "babylonjs"
-import OpenSimplexNoise from 'open-simplex-noise'
 import { HardwareInfo } from "../Infrastructure/HardwareInfo"
 import { TextureBuilder } from './TextureBuilder'
+import { ColorGradientFactory } from './ColorGradientFactory'
 
 const normalize = (val, min, max) => ((val - min) / (max - min))
 
 class PlanetMaterial {
+  name: string
   scene: BABYLON.Scene
   _raw: BABYLON.StandardMaterial
   heightMap: BABYLON.DynamicTexture
@@ -13,12 +14,8 @@ class PlanetMaterial {
   specularMap: BABYLON.DynamicTexture
 
   constructor(name: string = 'planetTexture', options: any, scene: BABYLON.Scene) {
+    this.name = name
     this.scene = scene
-    // setTimeout(() => {
-    //   const worker = new TextureBuilderWorker()
-    //   worker.postMessage({hello: 'world'})
-    //   worker.addEventListener("message", (event) => { console.log('message receive in main thread:', event)});
-    // }, 5000);
   }
 
   get raw(): BABYLON.StandardMaterial {
@@ -33,7 +30,7 @@ class PlanetMaterial {
    * New procedural material generation
    */
   protected generateMaterial(scene): BABYLON.Material {
-    this._raw = new BABYLON.StandardMaterial("planet", scene);
+    this._raw = new BABYLON.StandardMaterial(this.name, scene);
 
     this.generateBaseTextures(256).then(() => {
       this._raw.diffuseTexture = this.diffuseMap
@@ -43,7 +40,7 @@ class PlanetMaterial {
         this._raw.diffuseTexture = this.diffuseMap
         this._raw.specularTexture = this.specularMap
 
-        this.generateBaseTextures().then(() => {
+        this.generateBaseTextures(HardwareInfo.hasGoodVideoCard() ? 2048 : 1024).then(() => {
           this._raw.diffuseTexture = this.diffuseMap
           this._raw.specularTexture = this.specularMap
         })
@@ -62,53 +59,56 @@ class PlanetMaterial {
     return this._raw
   }
 
-  async generateBaseTextures(resolution?: number): Promise<BABYLON.DynamicTexture> {
-    const TEX_RES = resolution || (HardwareInfo.isMobile() ? 512 : (HardwareInfo.hasGoodVideoCard() ? 2048 : 1024))
-
+  async generateBaseTextures(resolution: number) {
     const settings = { layers: 10, strength: 0.8, roughness: 0.6, resistance: 0.70, min: 0.5 }
-    const baseRoughness = settings.roughness / 100
 
-    this.heightMap = new BABYLON.DynamicTexture("planetHeightMap", TEX_RES, this.scene, true)
-    this.specularMap = new BABYLON.DynamicTexture("planetSpecularMap", TEX_RES, this.scene, true)
-    this.diffuseMap = new BABYLON.DynamicTexture("planetDiffuseMap", TEX_RES, this.scene, true)
+    this.heightMap = new BABYLON.DynamicTexture("planetHeightMap", resolution, this.scene, true)
+    this.specularMap = new BABYLON.DynamicTexture("planetSpecularMap", resolution, this.scene, true)
+    this.diffuseMap = new BABYLON.DynamicTexture("planetDiffuseMap", resolution, this.scene, true)
+
     const heightMapCtx = this.heightMap.getContext();
     const specularMapCtx = this.specularMap.getContext();
     const diffuseMapCtx = this.diffuseMap.getContext();
 
-    const openSimplex = new OpenSimplexNoise(27);
-    const colorGradient = new Image();
-    colorGradient.src = `textures/earthgradient.png`;
+    const colorGradient = ColorGradientFactory.generateGradient(Date.now())
+    // const colorGradient = new Image();
+    // colorGradient.src = `textures/earthgradient.png`;
 
     const sphereNormalTexture = new Image();
     sphereNormalTexture.src = `textures/planetObjectSpaceNormal.png`;
-    return new Promise((resolve) => {
-      sphereNormalTexture.onload = async () => {
-        console.time('generateBaseTextures')
-
-        heightMapCtx.drawImage(sphereNormalTexture as CanvasImageSource, 0, 0, TEX_RES, TEX_RES)
-        const heightMapImage = heightMapCtx.getImageData(0, 0, TEX_RES, TEX_RES)
-
-        specularMapCtx.fillStyle = 'rgb(0,0,0)'
-        specularMapCtx.fillRect(0, 0, TEX_RES, TEX_RES)
-        const specularMapImage = specularMapCtx.getImageData(0, 0, TEX_RES, TEX_RES)
-
-        diffuseMapCtx.drawImage(colorGradient as CanvasImageSource, 0, 0, 256, 255)
-        const diffuseMapImage = diffuseMapCtx.getImageData(0, 0, TEX_RES, TEX_RES)
-
-        const { heightDataResult, specularDataResult, diffuseDataResult } = await TextureBuilder.buildTextures(heightMapImage, specularMapImage, diffuseMapImage)
-
-        console.log(heightDataResult.data[1500])
-        heightMapCtx.putImageData(heightMapImage, 0, 0);
-        specularMapCtx.putImageData(specularMapImage, 0, 0);
-        diffuseMapCtx.putImageData(diffuseMapImage, 0, 0);
-        this.heightMap.update();
-        this.specularMap.update();
-        this.diffuseMap.update();
-        console.timeEnd('generateBaseTextures')
-        console.log(TEX_RES)
-        resolve()
-      }
+    await new Promise((resolve) => {
+      sphereNormalTexture.onload = () => resolve()
     })
+
+    console.time('generateBaseTextures')
+
+    heightMapCtx.drawImage(sphereNormalTexture as CanvasImageSource, 0, 0, resolution, resolution)
+    const heightMapImage = heightMapCtx.getImageData(0, 0, resolution, resolution)
+
+    specularMapCtx.fillStyle = 'rgb(0,0,0)'
+    specularMapCtx.fillRect(0, 0, resolution, resolution)
+    const specularMapImage = specularMapCtx.getImageData(0, 0, resolution, resolution)
+
+    // diffuseMapCtx.drawImage(colorGradient as CanvasImageSource, 0, 0, 256, 255) // <start>
+    const gradient = diffuseMapCtx.createLinearGradient(0,0,255,0)
+    for (const color of colorGradient) {
+      gradient.addColorStop(color.a, `rgb(${color.r},${color.g},${color.b})`)
+    }
+    diffuseMapCtx.fillStyle = gradient;
+    diffuseMapCtx.fillRect(0, 0, 256, 5);
+    // diffuseMapCtx.drawImage(colorGradient as CanvasImageSource, 0, 0, 256, 255) // <end>
+    const diffuseMapImage = diffuseMapCtx.getImageData(0, 0, resolution, resolution)
+
+    const { heightDataResult, specularDataResult, diffuseDataResult } = await TextureBuilder.buildTextures(heightMapImage, specularMapImage, diffuseMapImage)
+
+    heightMapCtx.putImageData(heightMapImage, 0, 0);
+    specularMapCtx.putImageData(specularMapImage, 0, 0);
+    diffuseMapCtx.putImageData(diffuseMapImage, 0, 0);
+    this.heightMap.update();
+    this.specularMap.update();
+    this.diffuseMap.update();
+    console.timeEnd('generateBaseTextures')
+    console.log(resolution)
   }
 
   generateNormalMap(heightMap: BABYLON.DynamicTexture): BABYLON.Texture {
