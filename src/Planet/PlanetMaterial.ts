@@ -7,6 +7,7 @@ const normalize = (val, min, max) => ((val - min) / (max - min))
 
 class PlanetMaterial {
   name: string
+  seed: number
   scene: BABYLON.Scene
   _raw: BABYLON.StandardMaterial
   heightMap: BABYLON.DynamicTexture
@@ -16,6 +17,7 @@ class PlanetMaterial {
   constructor(name: string = 'planetTexture', options: any, scene: BABYLON.Scene) {
     this.name = name
     this.scene = scene
+    this.seed = Date.now()
   }
 
   get raw(): BABYLON.StandardMaterial {
@@ -51,6 +53,7 @@ class PlanetMaterial {
     this._raw.specularPower = 14
     // material.bumpTexture = this.generateNormalMap(heightMap, normals, uv)
     // material.diffuseTexture = new BABYLON.Texture("textures/planetObjectSpaceNormal.png", scene, true)
+    // this._raw.bumpTexture = new BABYLON.Texture("textures/mountainNormal.jpg", scene, true)
     // this._raw.diffuseTexture = this.heightMap
     // material.bumpTexture = new BABYLON.Texture("textures/planetNormal.png", scene)
     // material.diffuseColor = new BABYLON.Color3(0.8, 0.26, 0.4)
@@ -70,7 +73,7 @@ class PlanetMaterial {
     const specularMapCtx = this.specularMap.getContext();
     const diffuseMapCtx = this.diffuseMap.getContext();
 
-    const colorGradient = ColorGradientFactory.generateGradient(Date.now())
+    const colorGradient = ColorGradientFactory.generateGradient(this.seed)
     // const colorGradient = new Image();
     // colorGradient.src = `textures/earthgradient.png`;
 
@@ -92,7 +95,7 @@ class PlanetMaterial {
     // diffuseMapCtx.drawImage(colorGradient as CanvasImageSource, 0, 0, 256, 255) // <start>
     const gradient = diffuseMapCtx.createLinearGradient(0,0,255,0)
     for (const color of colorGradient) {
-      gradient.addColorStop(color.a, `rgb(${color.r},${color.g},${color.b})`)
+      gradient.addColorStop(color.a / 255, `rgb(${color.r},${color.g},${color.b})`)
     }
     diffuseMapCtx.fillStyle = gradient;
     diffuseMapCtx.fillRect(0, 0, 256, 5);

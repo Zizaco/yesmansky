@@ -17,7 +17,8 @@ class HardwareInfo {
   }
 
   static hasGoodVideoCard() {
-    return /(NVIDIA|AMD)/.test(this.gpuVendor())
+    return /(NVIDIA|AMD)/.test(this.gpuVendor()) ||
+      /(NVIDIA|AMD)/.test(window.game.engine.getGlInfo().renderer)
   }
 }
 
