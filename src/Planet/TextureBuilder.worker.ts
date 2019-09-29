@@ -55,7 +55,7 @@ const _buildTextures = async (heightData: Uint8ClampedArray, specularData: Uint8
     value = Math.round(normalize(value, 255 * settings.min, 255) * 255)
     value = Math.min(value, 255)
     if (value <= 1) {
-      heightData[a] = heightData[a + 1] = heightData[a + 2] = 20
+      heightData[a] = heightData[a + 1] = heightData[a + 2] = 0
       specularData[a] = specularData[a + 1] = specularData[a + 2] = 100
     } else {
       heightData[a] = heightData[a + 1] = heightData[a + 2] = value
