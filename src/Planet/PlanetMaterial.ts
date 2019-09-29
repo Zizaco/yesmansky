@@ -1,4 +1,4 @@
-import * as BABYLON from "babylonjs"
+import * as BABYLON from '@babylonjs/core/Legacy/legacy'
 import { HardwareInfo } from "../Infrastructure/HardwareInfo"
 import { TextureBuilder } from './TextureBuilder'
 import { ColorGradientFactory } from './ColorGradientFactory'

@@ -1,4 +1,4 @@
-import * as BABYLON from "babylonjs";
+import * as BABYLON from '@babylonjs/core/Legacy/legacy';
 import * as localforage from 'localforage';
 import { Planet } from './Planet/Planet';
 import { HardwareInfo } from './Infrastructure/HardwareInfo';

@@ -1,5 +1,5 @@
-import * as BABYLON from "babylonjs"
-import { Vector3 } from "babylonjs"
+import * as BABYLON from '@babylonjs/core/Legacy/legacy'
+import { Vector3 } from '@babylonjs/core/Maths/math.vector'
 import OpenSimplexNoise from 'open-simplex-noise';
 
 type PlanetMeshOptions = { subdivisions?: number }

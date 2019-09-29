@@ -1,4 +1,4 @@
-import * as BABYLON from "babylonjs"
+import * as BABYLON from '@babylonjs/core/Legacy/legacy'
 import { PlanetMesh } from './PlanetMesh'
 import { IcoPlanetMesh } from './IcoPlanetMesh'
 import OpenSimplexNoise from 'open-simplex-noise';

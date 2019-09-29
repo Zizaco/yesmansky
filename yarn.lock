@@ -2,6 +2,13 @@
 # yarn lockfile v1
 
 
+"@babylonjs/core@^4.1.0-alpha.23":
+  version "4.1.0-alpha.23"
+  resolved "https://registry.yarnpkg.com/@babylonjs/core/-/core-4.1.0-alpha.23.tgz#fdebc085241630e0f61086068606d6bf7c9bb759"
+  integrity sha512-gk5AwaXWXaz3dTPEeuactutA0pIuzU8Es6DSHIFHTZ/K7AtYXZCeHOG2iglEgIEq2k9z9ceqNrqj/J7SkPvGCA==
+  dependencies:
+    tslib "^1.9.3"
+
 "@types/events@*":
   version "3.0.0"
   resolved "https://registry.yarnpkg.com/@types/events/-/events-3.0.0.tgz#2862f3f58a9a7f7c3e78d79f130dd4d71c25c2a7"
@@ -308,10 +315,6 @@ async@^1.5.2:
 atob@^2.1.1:
   version "2.1.2"
   resolved "https://registry.yarnpkg.com/atob/-/atob-2.1.2.tgz#6d9517eb9e030d2436666651e86bd9f6f13533c9"
-
-babylonjs@^4.0.3:
-  version "4.0.3"
-  resolved "https://registry.yarnpkg.com/babylonjs/-/babylonjs-4.0.3.tgz#5dba9a96a7cb70634338e8dd7a17081e9f902cf6"
 
 balanced-match@^1.0.0:
   version "1.0.0"
@@ -3243,7 +3246,7 @@ ts-loader@^6.1.0:
     micromatch "^4.0.0"
     semver "^6.0.0"
 
-tslib@^1.9.0:
+tslib@^1.9.0, tslib@^1.9.3:
   version "1.10.0"
   resolved "https://registry.yarnpkg.com/tslib/-/tslib-1.10.0.tgz#c3c19f95973fb0a62973fb09d90d961ee43e5c8a"
 

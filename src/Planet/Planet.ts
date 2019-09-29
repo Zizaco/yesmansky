@@ -1,4 +1,4 @@
-import * as BABYLON from "babylonjs"
+import * as BABYLON from '@babylonjs/core/Legacy/legacy'
 import { PlanetMesh } from './PlanetMesh'
 import OpenSimplexNoise from 'open-simplex-noise'
 import { HardwareInfo } from '../Infrastructure/HardwareInfo'

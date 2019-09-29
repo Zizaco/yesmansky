@@ -1,7 +1,6 @@
 import { Game } from "./Game";
 import * as localforage from 'localforage';
-import * as BABYLON from "babylonjs";
-import { PlanetTextureFactory } from "./Texture/PlanetTextureFactory";
+import * as BABYLON from '@babylonjs/core/Legacy/legacy';
 
 declare global {
   interface Window {
