@@ -2,12 +2,14 @@ import * as BABYLON from '@babylonjs/core/Legacy/legacy'
 import { HardwareInfo } from "../Infrastructure/HardwareInfo"
 import { TextureBuilder } from './TextureBuilder'
 import { ColorGradientFactory } from './ColorGradientFactory'
+import { NoiseSettings } from './types'
 
 const normalize = (val, min, max) => ((val - min) / (max - min))
 
 class PlanetMaterial {
   name: string
   seed: number
+  _noiseSettings: NoiseSettings
   scene: BABYLON.Scene
   _raw: BABYLON.StandardMaterial
   heightMap: BABYLON.DynamicTexture
@@ -19,6 +21,11 @@ class PlanetMaterial {
     this.name = name
     this.scene = scene
     this.seed = Math.random()*128
+    this._noiseSettings = [
+      // { shift: 0, passes: 10, strength: 0.8, roughness: 0.6, resistance: 0.70, min: 0.2, hard: false }, // base
+      // { shift: 18, passes: 15, strength: 0.8, roughness: 0.3, resistance: 0.65, min: 0.2, hard: true }, // erosion
+      { "shift": 5, "passes": 14, "strength": 0.65, "roughness": 0.2, "resistance": 0.6, "min": 0.3, "hard": true }
+    ]
   }
 
   get raw(): BABYLON.StandardMaterial {
@@ -27,6 +34,21 @@ class PlanetMaterial {
     }
 
     return this._raw
+  }
+
+  set noiseSettings(value: NoiseSettings) {
+    if (this._raw) {
+      const oldRawMaterial = this._raw
+      setTimeout(() => oldRawMaterial.dispose(true, true), 2000)
+      this.bumpMap.dispose()
+      this.bumpMap = undefined
+    }
+    this._noiseSettings = value
+    this.generateMaterial(this.scene)
+  }
+
+  get noiseSettings(): NoiseSettings {
+    return this._noiseSettings
   }
 
   /**
@@ -42,12 +64,20 @@ class PlanetMaterial {
       this._raw.bumpTexture.level = 0.2
 
       this.generateBaseTextures(512).then(() => {
+        this._raw.diffuseTexture.dispose()
+        this._raw.specularTexture.dispose()
+        this._raw.bumpTexture.dispose()
+
         this._raw.diffuseTexture = this.diffuseMap
         this._raw.specularTexture = this.specularMap
         this._raw.bumpTexture = this.bumpMap
         this._raw.bumpTexture.level = 0.3
 
         this.generateBaseTextures(HardwareInfo.hasGoodVideoCard() ? 2048 : 1024).then(() => {
+          this._raw.diffuseTexture.dispose()
+          this._raw.specularTexture.dispose()
+          this._raw.bumpTexture.dispose()
+
           this._raw.diffuseTexture = this.diffuseMap
           this._raw.specularTexture = this.specularMap
           this._raw.bumpTexture = this.bumpMap
@@ -64,6 +94,7 @@ class PlanetMaterial {
 
   async generateBaseTextures(resolution: number) {
     const settings = { layers: 10, strength: 0.8, roughness: 0.6, resistance: 0.70, min: 0.5 }
+    const oldHeightMap = this.heightMap
 
     this.heightMap = new BABYLON.DynamicTexture("planetHeightMap", resolution, this.scene, true)
     this.specularMap = new BABYLON.DynamicTexture("planetSpecularMap", resolution, this.scene, true)
@@ -98,7 +129,7 @@ class PlanetMaterial {
     diffuseMapCtx.fillRect(0, 0, 256, 5);
     const diffuseMapImage = diffuseMapCtx.getImageData(0, 0, resolution, resolution)
 
-    const { heightDataResult, specularDataResult, diffuseDataResult } = await TextureBuilder.buildTextures(heightMapImage, specularMapImage, diffuseMapImage)
+    const { heightDataResult, specularDataResult, diffuseDataResult } = await TextureBuilder.buildTextures(this._noiseSettings, heightMapImage, specularMapImage, diffuseMapImage)
 
     heightMapCtx.putImageData(heightMapImage, 0, 0);
     specularMapCtx.putImageData(specularMapImage, 0, 0);
@@ -107,6 +138,11 @@ class PlanetMaterial {
     this.specularMap.update();
     this.diffuseMap.update();
     this.bumpMap = this.generateNormalMap(heightMapImage, resolution)
+
+    if (oldHeightMap) {
+      setTimeout(() => oldHeightMap.dispose(), 2000)
+    }
+
     console.timeEnd('generateBaseTextures')
     console.log(resolution)
   }

@@ -27,7 +27,7 @@ class Game {
     );
 
     camera.attachControl(el);
-    camera.wheelPrecision = 10
+    camera.wheelPrecision = 30
     camera.pinchPrecision = 100
 
     const light = new BABYLON.HemisphericLight(

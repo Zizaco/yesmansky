@@ -1,4 +1,5 @@
 import OpenSimplexNoise from 'open-simplex-noise'
+import { NoiseSettings } from './types'
 const ctx: Worker = self as any;
 
 const normalize = (val, min, max) => ((val - min) / (max - min))
@@ -10,13 +11,16 @@ type BuiltTextures = {
 }
 
 ctx.addEventListener("message", async (event) => {
-  const result = await _buildTextures(...(event.data as [Uint8ClampedArray, Uint8ClampedArray, Uint8ClampedArray]))
+  const result = await _buildTextures(...(event.data as [NoiseSettings, Uint8ClampedArray, Uint8ClampedArray, Uint8ClampedArray]))
   ctx.postMessage(result)
 });
 
-const _buildTextures = async (heightData: Uint8ClampedArray, specularData: Uint8ClampedArray, diffuseData: Uint8ClampedArray): Promise<BuiltTextures> => {
-  const settings = { layers: 10, strength: 0.8, roughness: 0.6, resistance: 0.70, min: 0.5 }
-  const baseRoughness = settings.roughness / 100
+const _buildTextures = async (noiseSettings: NoiseSettings, heightData: Uint8ClampedArray, specularData: Uint8ClampedArray, diffuseData: Uint8ClampedArray): Promise<BuiltTextures> => {
+  const settings = noiseSettings
+  // const settings = [
+  //   { shift: 0, passes: 10, strength: 0.8, roughness: 0.6, resistance: 0.70, min: 0.2, hard: false }, // base
+  //   { shift: 18, passes: 15, strength: 0.8, roughness: 0.3, resistance: 0.65, min: 0.2, hard: true }, // erosion
+  // ]
 
   const openSimplex = new OpenSimplexNoise(27);
 
@@ -42,17 +46,31 @@ const _buildTextures = async (heightData: Uint8ClampedArray, specularData: Uint8
       g += minibump
     }
 
-    let roughness = baseRoughness
-    let strength = settings.strength
     let value = 0
-    for (let layer = 0; layer < settings.layers; layer++) {
-      value += openSimplex.noise3D(r * roughness, g * roughness, b * roughness) * strength;
-      roughness = roughness * 2
-      strength = strength * settings.resistance
+    for (let j = 0; j < settings.length; j++) {
+      const layerSettings = settings[j];
+
+      let roughness = layerSettings.roughness / 100
+      let strength = layerSettings.strength
+      for (let pass = 0; pass < layerSettings.passes; pass++) {
+        let noiseValue: number
+        if (layerSettings.hard) {
+          noiseValue = 1 - 4*Math.abs(openSimplex.noise3D(layerSettings.shift + r * roughness, g * roughness, b * roughness));
+          noiseValue *= (noiseValue * noiseValue) * strength
+          if (Math.random() * 100000 >= 99999) {
+            console.log('noiseValue', noiseValue)
+          }
+        } else {
+          noiseValue = openSimplex.noise3D(layerSettings.shift + r * roughness, g * roughness, b * roughness) * strength;
+        }
+        value += noiseValue
+        roughness = roughness * 2
+        strength = strength * layerSettings.resistance
+      }
     }
 
-    value = Math.max(value * 128 + 128, 255 * settings.min)
-    value = Math.round(normalize(value, 255 * settings.min, 255) * 255)
+    value = Math.max(value * 128 + 128, 255 * settings[0].min)
+    value = Math.round(normalize(value, 255 * settings[0].min, 255) * 255)
     value = Math.min(value, 255)
     if (value <= 1) {
       heightData[a] = heightData[a + 1] = heightData[a + 2] = 0

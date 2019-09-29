@@ -1,5 +1,6 @@
 const backgroundWorker = require('worker-loader!./TextureBuilder.worker')
 import OpenSimplexNoise from 'open-simplex-noise'
+import { NoiseSettings } from './types'
 
 const normalize = (val, min, max) => ((val - min) / (max - min))
 
@@ -10,7 +11,7 @@ type BuiltTextures = {
 }
 
 class TextureBuilder {
-  static buildTextures(heightMapImage: ImageData, specularMapImage: ImageData, diffuseMapImage: ImageData): Promise<BuiltTextures> {
+  static buildTextures(noiseSettings: NoiseSettings, heightMapImage: ImageData, specularMapImage: ImageData, diffuseMapImage: ImageData): Promise<BuiltTextures> {
     const worker = new backgroundWorker()
 
     return new Promise((resolve) => {
@@ -29,7 +30,7 @@ class TextureBuilder {
         })
         worker.terminate()
       });
-      worker.postMessage([heightMapImage.data, specularMapImage.data, diffuseMapImage.data])
+      worker.postMessage([noiseSettings, heightMapImage.data, specularMapImage.data, diffuseMapImage.data])
     })
   }
 

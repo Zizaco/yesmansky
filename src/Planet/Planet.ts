@@ -42,6 +42,17 @@ class Planet extends BABYLON.TransformNode {
     return this.mesh.subdivisions
   }
 
+  set noiseSettings(value: string) {
+    this.material.noiseSettings = JSON.parse(value)
+    setTimeout(() => {
+      this.mesh.material = this.material.raw
+    }, 100)
+  }
+
+  get noiseSettings(): string {
+    return JSON.stringify(this.material.noiseSettings)
+  }
+
   protected setInspectableProperties() {
     this.inspectableCustomProperties = [
       {
@@ -51,6 +62,11 @@ class Planet extends BABYLON.TransformNode {
         min: 3,
         max: 256,
         step: 1
+      },
+      {
+        label: "Noise Settings",
+        propertyName: "noiseSettings",
+        type: BABYLON.InspectableType.String
       }
     ]
   }
