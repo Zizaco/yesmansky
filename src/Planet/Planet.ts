@@ -21,7 +21,7 @@ class Planet extends BABYLON.TransformNode {
   constructor(name: string = 'planet', scene) {
     super(name)
     this.scene = scene
-    const options = { diameter: 1, diameterX: 1, subdivisions: 90 }
+    const options = { diameter: 1, diameterX: 1, subdivisions: 25 }
 
     this.mesh = new PlanetMesh('myPlanet', options as any, scene)
     this.mesh.setParent(this)
@@ -30,6 +30,10 @@ class Planet extends BABYLON.TransformNode {
     setTimeout(() => {
       this.mesh.material = this.material.raw
     }, 100)
+
+    setTimeout(() => {
+      // this.mesh.material = this.material._superRaw
+    }, 7000)
 
     this.setInspectableProperties()
   }

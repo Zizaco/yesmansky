@@ -12,6 +12,7 @@ class PlanetMaterial {
   _noiseSettings: NoiseSettings
   scene: BABYLON.Scene
   _raw: BABYLON.StandardMaterial
+  _superRaw: BABYLON.Material
   heightMap: BABYLON.DynamicTexture
   diffuseMap: BABYLON.DynamicTexture
   specularMap: BABYLON.DynamicTexture
@@ -78,11 +79,14 @@ class PlanetMaterial {
           this._raw.specularTexture.dispose()
           this._raw.bumpTexture.dispose()
 
+
           this._raw.diffuseTexture = this.diffuseMap
           this._raw.specularTexture = this.specularMap
           this._raw.bumpTexture = this.bumpMap
           this._raw.bumpTexture.level = 0.45
-        })
+
+          // this._superRaw = this.buildShader(this.diffuseMap, this.specularMap, this.bumpMap)
+        }).catch((e) => console.error(e))
       })
     })
 
@@ -231,6 +235,209 @@ class PlanetMaterial {
 
     this.bumpMap.update();
     return this.bumpMap
+  }
+
+  buildShader(diffuseTexture: BABYLON.Texture, specularTexture: BABYLON.Texture, bumpTexture: BABYLON.Texture, emissiveTexture?: BABYLON.Texture){
+    var nodeMaterial = new BABYLON.NodeMaterial('planetMaterial', this.scene);
+
+    var position = new BABYLON.InputBlock("position");
+    position.setAsAttribute("position");
+
+    var worldPos = new BABYLON.TransformBlock("worldPos");
+    worldPos.complementZ = 0;
+    worldPos.complementW = 1;
+    position.output.connectTo(worldPos.vector);
+
+    var world = new BABYLON.InputBlock("world");
+    world.setAsSystemValue(BABYLON.NodeMaterialSystemValues.World);
+
+    var Worldnormal = new BABYLON.TransformBlock("World normal");
+    Worldnormal.complementZ = 0;
+    Worldnormal.complementW = 1;
+
+    var normal = new BABYLON.InputBlock("normal");
+    normal.setAsAttribute("normal");
+    normal.output.connectTo(Worldnormal.vector);
+    world.output.connectTo(Worldnormal.transform);
+
+    var Multiply = new BABYLON.MultiplyBlock("Multiply");
+
+    var bumpMap = new BABYLON.TextureBlock("bumpMap");
+    bumpMap.texture = bumpTexture
+    bumpMap.texture.wrapU = 1;
+    bumpMap.texture.wrapV = 1;
+    bumpMap.texture.uAng = 0;
+    bumpMap.texture.vAng = 0;
+    bumpMap.texture.wAng = 0;
+    bumpMap.texture.uOffset = 0;
+    bumpMap.texture.vOffset = 0;
+    bumpMap.texture.uScale = 1;
+    bumpMap.texture.vScale = 1;
+    bumpMap.texture.gammaSpace = true;
+
+    var uv = new BABYLON.InputBlock("uv");
+    uv.setAsAttribute("uv");
+
+    var specularMap = new BABYLON.TextureBlock("specularMap");
+    specularMap.texture = specularTexture
+    specularMap.texture.wrapU = 1;
+    specularMap.texture.wrapV = 1;
+    specularMap.texture.uAng = 0;
+    specularMap.texture.vAng = 0;
+    specularMap.texture.wAng = 0;
+    specularMap.texture.uOffset = 0;
+    specularMap.texture.vOffset = 0;
+    specularMap.texture.uScale = 1;
+    specularMap.texture.vScale = 1;
+    specularMap.texture.gammaSpace = true;
+    uv.output.connectTo(specularMap.uv);
+
+    var Multiply1 = new BABYLON.MultiplyBlock("Multiply");
+    specularMap.rgb.connectTo(Multiply1.left);
+
+    var Multiply2 = new BABYLON.MultiplyBlock("Multiply");
+
+    var diffuseMap = new BABYLON.TextureBlock("diffuseMap");
+    diffuseMap.texture = diffuseTexture
+    diffuseMap.texture.wrapU = 1;
+    diffuseMap.texture.wrapV = 1;
+    diffuseMap.texture.uAng = 0;
+    diffuseMap.texture.vAng = 0;
+    diffuseMap.texture.wAng = 0;
+    diffuseMap.texture.uOffset = 0;
+    diffuseMap.texture.vOffset = 0;
+    diffuseMap.texture.uScale = 1;
+    diffuseMap.texture.vScale = 1;
+    diffuseMap.texture.gammaSpace = true;
+    uv.output.connectTo(diffuseMap.uv);
+
+    var Multiply3 = new BABYLON.MultiplyBlock("Multiply");
+
+    var Lights = new BABYLON.LightBlock("Lights");
+    worldPos.output.connectTo(Lights.worldPosition);
+    Multiply.output.connectTo(Lights.worldNormal, true);
+
+    var cameraPosition = new BABYLON.InputBlock("cameraPosition");
+    cameraPosition.setAsSystemValue(BABYLON.NodeMaterialSystemValues.CameraPosition);
+
+    var Viewdirection = new BABYLON.ViewDirectionBlock("View direction");
+    worldPos.output.connectTo(Viewdirection.worldPosition);
+    cameraPosition.output.connectTo(Viewdirection.cameraPosition);
+
+    var Distance = new BABYLON.DistanceBlock("Distance");
+
+    var Multiply4 = new BABYLON.MultiplyBlock("Multiply");
+
+    var VectorSplitter = new BABYLON.VectorSplitterBlock("VectorSplitter");
+    worldPos.output.connectTo(VectorSplitter.xyzw);
+    VectorSplitter.xyzOut.connectTo(Multiply4.left);
+
+    var atmosphere = new BABYLON.InputBlock("atmosphere");
+    atmosphere.value = new BABYLON.Color3(0.6392156862745098, 0.6392156862745098, 0.6392156862745098);
+    atmosphere.isConstant = false;
+    atmosphere.visibleInInspector = false;
+    atmosphere.output.connectTo(Multiply4.right);
+    Multiply4.output.connectTo(Distance.left);
+    Viewdirection.output.connectTo(Distance.right);
+
+    var Gradient = new BABYLON.GradientBlock("Gradient");
+    Gradient.colorSteps.pop()
+    Gradient.colorSteps.pop()
+    Gradient.colorSteps.push(new BABYLON.GradientBlockColorStep(1, new BABYLON.Color3(0.11764705882352941, 0.11764705882352941, 0.11764705882352941)));
+    Gradient.colorSteps.push(new BABYLON.GradientBlockColorStep(0.4, new BABYLON.Color3(0.3843137254901961, 0.3843137254901961, 0.3843137254901961)));
+    Distance.output.connectTo(Gradient.gradient);
+
+    var Divide = new BABYLON.DivideBlock("Divide");
+
+    var Add = new BABYLON.AddBlock("Add");
+    Multiply1.output.connectTo(Add.left);
+    Multiply3.output.connectTo(Add.right, true);
+    Add.output.connectTo(Divide.left);
+    Gradient.output.connectTo(Divide.right);
+
+    var Multiply5 = new BABYLON.MultiplyBlock("Multiply");
+    Divide.output.connectTo(Multiply5.left);
+
+    var Gradient1 = new BABYLON.GradientBlock("Gradient");
+    Gradient1.colorSteps.pop()
+    Gradient1.colorSteps.pop()
+    Gradient1.colorSteps.push(new BABYLON.GradientBlockColorStep(1, new BABYLON.Color3(0.49411764705882355, 0.49411764705882355, 0.49411764705882355)));
+    Gradient1.colorSteps.push(new BABYLON.GradientBlockColorStep(0.28, new BABYLON.Color3(0.1568627450980392, 0.1568627450980392, 0.1568627450980392)));
+    Distance.output.connectTo(Gradient1.gradient);
+    Gradient1.output.connectTo(Multiply5.right);
+
+    var Max = new BABYLON.MaxBlock("Max");
+    Multiply5.output.connectTo(Max.left);
+
+    var Multiply6 = new BABYLON.MultiplyBlock("Multiply");
+
+    var emissiveMap = new BABYLON.TextureBlock("emissiveMap");
+    emissiveMap.texture = emissiveTexture
+    if (emissiveMap.texture) {
+      emissiveMap.texture.wrapU = 1;
+      emissiveMap.texture.wrapV = 1;
+      emissiveMap.texture.uAng = 0;
+      emissiveMap.texture.vAng = 0;
+      emissiveMap.texture.wAng = 0;
+      emissiveMap.texture.uOffset = 0;
+      emissiveMap.texture.vOffset = 0;
+      emissiveMap.texture.uScale = 1;
+      emissiveMap.texture.vScale = 1;
+      emissiveMap.texture.gammaSpace = true;
+    }
+    uv.output.connectTo(emissiveMap.uv);
+    emissiveMap.rgb.connectTo(Multiply6.left);
+
+    var Color = new BABYLON.InputBlock("Color3");
+    Color.value = new BABYLON.Color3(0.39215686274509803, 0.39215686274509803, 0.39215686274509803);
+    Color.isConstant = false;
+    Color.visibleInInspector = false;
+    Color.output.connectTo(Multiply6.right);
+    Multiply6.output.connectTo(Max.right);
+
+    var fragmentOutput = new BABYLON.FragmentOutputBlock("fragmentOutput");
+    Max.output.connectTo(fragmentOutput.rgb);
+
+    var alpha = new BABYLON.InputBlock("alpha");
+    alpha.value = 1;
+    alpha.min = 0;
+    alpha.max = 1;
+    alpha.matrixMode = 0;
+    alpha.output.connectTo(fragmentOutput.a);
+    cameraPosition.output.connectTo(Lights.cameraPosition);
+
+    var specularPower = new BABYLON.InputBlock("specularPower");
+    specularPower.value = 30;
+    specularPower.min = 0;
+    specularPower.max = 100;
+    specularPower.matrixMode = 0;
+    specularPower.output.connectTo(Lights.glossPower);
+    Lights.diffuseOutput.connectTo(Multiply3.left);
+    diffuseMap.rgb.connectTo(Multiply3.right);
+    diffuseMap.rgb.connectTo(Multiply2.left);
+    Lights.specularOutput.connectTo(Multiply2.right);
+    Multiply2.output.connectTo(Multiply1.right);
+    uv.output.connectTo(bumpMap.uv);
+    bumpMap.rgba.connectTo(Multiply.left);
+    Worldnormal.output.connectTo(Multiply.right);
+    world.output.connectTo(worldPos.transform);
+
+    var worldPosviewProjectionTransform = new BABYLON.TransformBlock("worldPos * viewProjectionTransform");
+    worldPosviewProjectionTransform.complementZ = 0;
+    worldPosviewProjectionTransform.complementW = 1;
+    worldPos.output.connectTo(worldPosviewProjectionTransform.vector);
+
+    var viewProjection = new BABYLON.InputBlock("viewProjection");
+    viewProjection.setAsSystemValue(BABYLON.NodeMaterialSystemValues.ViewProjection);
+    viewProjection.output.connectTo(worldPosviewProjectionTransform.transform);
+
+    var vertexOutput = new BABYLON.VertexOutputBlock("vertexOutput");
+    worldPosviewProjectionTransform.output.connectTo(vertexOutput.vector);
+    nodeMaterial.addOutputNode(vertexOutput);
+    nodeMaterial.addOutputNode(fragmentOutput);
+    nodeMaterial.build();
+
+    return nodeMaterial
   }
 }
 

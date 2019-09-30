@@ -57,9 +57,6 @@ const _buildTextures = async (noiseSettings: NoiseSettings, heightData: Uint8Cla
         if (layerSettings.hard) {
           noiseValue = 1 - 4*Math.abs(openSimplex.noise3D(layerSettings.shift + r * roughness, g * roughness, b * roughness));
           noiseValue *= (noiseValue * noiseValue) * strength
-          if (Math.random() * 100000 >= 99999) {
-            console.log('noiseValue', noiseValue)
-          }
         } else {
           noiseValue = openSimplex.noise3D(layerSettings.shift + r * roughness, g * roughness, b * roughness) * strength;
         }
