@@ -23,12 +23,14 @@ class Planet extends BABYLON.TransformNode {
     this.scene = scene
     const options = { diameter: 1, diameterX: 1, subdivisions: 25 }
 
-    this.mesh = new PlanetMesh('myPlanet', options as any, scene)
+    this.mesh = new PlanetMesh(name, options as any, scene)
     this.mesh.setParent(this)
+
     this.material = new PlanetMaterial('myPlanetMat', {}, scene)
 
     setTimeout(() => {
       this.mesh.material = this.material.raw
+      this.mesh.atmosphereMaterial = this.material.rawAtmosphere
     }, 100)
 
     setTimeout(() => {

@@ -12,6 +12,7 @@ class PlanetMaterial {
   _noiseSettings: NoiseSettings
   scene: BABYLON.Scene
   _raw: BABYLON.StandardMaterial
+  _rawAtmosphere: BABYLON.StandardMaterial
   _superRaw: BABYLON.Material
   heightMap: BABYLON.DynamicTexture
   diffuseMap: BABYLON.DynamicTexture
@@ -35,6 +36,14 @@ class PlanetMaterial {
     }
 
     return this._raw
+  }
+
+  get rawAtmosphere(): BABYLON.StandardMaterial {
+    if (!this._rawAtmosphere) {
+      this.generateAtmosphere(this.scene)
+    }
+
+    return this._rawAtmosphere
   }
 
   set noiseSettings(value: NoiseSettings) {
@@ -94,6 +103,20 @@ class PlanetMaterial {
     this._raw.specularPower = 14
 
     return this._raw
+  }
+
+  protected generateAtmosphere(scene): BABYLON.Material {
+    this._rawAtmosphere = new BABYLON.StandardMaterial(`${this.name}Atmosphere`, scene);
+    this._rawAtmosphere.reflectionTexture = new BABYLON.Texture("textures/atmosphere.png", scene);
+    this._rawAtmosphere.diffuseTexture = new BABYLON.Texture("textures/planetClouds1.jpg", scene);
+    this._rawAtmosphere.reflectionTexture.coordinatesMode = BABYLON.Texture.SPHERICAL_MODE;
+    this._rawAtmosphere.alpha = 0.5
+    this._rawAtmosphere.alphaMode = BABYLON.Engine.ALPHA_ADD
+    this._rawAtmosphere.specularPower = 2.5
+    this._rawAtmosphere.zOffset = -5
+    this._rawAtmosphere.specularColor = new BABYLON.Color3(0.1, 0.3, 0.5)
+
+    return this._rawAtmosphere
   }
 
   async generateBaseTextures(resolution: number) {

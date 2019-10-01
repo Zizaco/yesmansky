@@ -3,6 +3,12 @@ import * as localforage from 'localforage';
 import { Planet } from './Planet/Planet';
 import { HardwareInfo } from './Infrastructure/HardwareInfo';
 
+declare global {
+  interface Window {
+    planet: Planet
+  }
+}
+
 class Game {
   engine: BABYLON.Engine
   scene: BABYLON.Scene
@@ -72,6 +78,7 @@ class Game {
 
   render() {
     (window as any).planet.rotateAround(BABYLON.Vector3.Zero(), new BABYLON.Vector3(0, 1, 0), 0.0005)
+    window.planet.mesh.atmosphereMesh.rotateAround(BABYLON.Vector3.Zero(), new BABYLON.Vector3(0, 1, 0), 0.0005)
     this.scene.render();
   }
 

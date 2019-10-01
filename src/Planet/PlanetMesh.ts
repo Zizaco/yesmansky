@@ -6,10 +6,12 @@ type PlanetMeshOptions = { subdivisions?: number }
 
 class PlanetMesh extends BABYLON.TransformNode {
   planetMesh: BABYLON.Mesh
+  atmosphereMesh: BABYLON.Mesh
   faces: Array<BABYLON.Mesh>
   _scene: BABYLON.Scene
-  _subdivisions: number
-  _material: BABYLON.Material
+  protected _subdivisions: number
+  protected _material: BABYLON.Material
+  protected _atmosphereMaterial: BABYLON.Material
 
   constructor(name: string = 'planetMesh', options: PlanetMeshOptions, scene: BABYLON.Scene) {
     super(name)
@@ -27,6 +29,11 @@ class PlanetMesh extends BABYLON.TransformNode {
     this.applyMaterial()
   }
 
+  set atmosphereMaterial(value: BABYLON.Material) {
+    this._atmosphereMaterial = value
+    this.applyMaterial()
+  }
+
   set subdivisions(value: number) {
     this._subdivisions = value
     this.buildMeshes()
@@ -39,6 +46,7 @@ class PlanetMesh extends BABYLON.TransformNode {
   protected buildMeshes() {
     this.deleteFaces()
     this.generateFaces(this._scene)
+    this.generateAtmosphere()
     this.applyMaterial()
   }
 
@@ -52,6 +60,7 @@ class PlanetMesh extends BABYLON.TransformNode {
     }
 
     this.planetMesh.dispose()
+    this.atmosphereMesh.dispose()
   }
 
   protected generateFaces(scene: BABYLON.Scene) {
@@ -73,6 +82,12 @@ class PlanetMesh extends BABYLON.TransformNode {
     this.planetMesh = BABYLON.Mesh.MergeMeshes(this.faces, false, this.subdivisions > 100)
     this.planetMesh.setParent(this)
     this.smoothNormalsOfSphereMesh(this.planetMesh)
+  }
+
+  protected generateAtmosphere() {
+    this.atmosphereMesh = BABYLON.MeshBuilder.CreateSphere(`${this.name}Atmosphere`, {segments: this._subdivisions*2, diameter: 2}, this._scene)
+    this.atmosphereMesh.scaling.multiplyInPlace(new Vector3(1.005, 1.005, 1.005))
+    this.atmosphereMesh.setParent(this)
   }
 
   /**
@@ -136,6 +151,7 @@ class PlanetMesh extends BABYLON.TransformNode {
       }
     }
     this.planetMesh.material = this._material
+    this.atmosphereMesh.material = this._atmosphereMaterial
   }
 
   protected setInspectableProperties() {
