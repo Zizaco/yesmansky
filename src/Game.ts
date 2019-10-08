@@ -28,7 +28,7 @@ class Game {
       "camera",
       Math.PI / 2,
       Math.PI / 3.2,
-      2,
+      2.5,
       BABYLON.Vector3.Zero(),
       this.scene
     );
@@ -73,7 +73,7 @@ class Game {
       pipeline.sharpen.edgeAmount = 0.8
     }
 
-    this.scene.debugLayer.show({ embedMode: true, overlay: true });
+    // this.scene.debugLayer.show({ embedMode: true, overlay: true });
     this.engine.runRenderLoop(() => this.render());
   }
 
