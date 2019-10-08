@@ -1,4 +1,4 @@
-import * as MobileDetect from 'mobile-detect'
+const MobileDetect = require('mobile-detect')
 
 class HardwareInfo {
   static detection = new MobileDetect(window.navigator.userAgent)

@@ -1,3 +1,5 @@
+import Vue from 'vue'
+import App from './App.vue'
 import { Game } from "./Game";
 import * as localforage from 'localforage';
 import * as BABYLON from '@babylonjs/core/Legacy/legacy';
@@ -13,10 +15,9 @@ declare global {
 if (process.env.NODE_ENV === 'development') {
   window.localforage = localforage
   window.BABYLON = BABYLON
+  Vue.config.productionTip = false
 }
 
-const view = document.getElementById("view") as HTMLCanvasElement;
-view.width = window.innerWidth
-view.height = window.innerHeight
-window.game = new Game(view)
-// new PlanetTextureFactory(view, 512)
+new Vue({
+  render: h => h(App),
+}).$mount('#app')

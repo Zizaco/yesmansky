@@ -1,5 +1,5 @@
 import OpenSimplexNoise from 'open-simplex-noise'
-import * as colorPallets from './color-pallets.json'
+const colorPallets = require('./color-pallets.json')
 
 type rgba = { r: number, g: number, b: number, a: number }
 type colorGradient = {

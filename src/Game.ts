@@ -33,7 +33,7 @@ class Game {
       this.scene
     );
 
-    // this.camera.attachControl(el, false);
+    this.camera.attachControl(el, true);
     this.camera.wheelPrecision = 30
     this.camera.pinchPrecision = 100
 
