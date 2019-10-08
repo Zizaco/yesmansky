@@ -12,6 +12,7 @@ declare global {
 class Game {
   engine: BABYLON.Engine
   scene: BABYLON.Scene
+  camera: BABYLON.ArcRotateCamera
 
   constructor(el: HTMLCanvasElement) {
     const engineOptions = {
@@ -23,7 +24,7 @@ class Game {
 
     this.setGraphicalSettings()
 
-    const camera = new BABYLON.ArcRotateCamera(
+    this.camera = new BABYLON.ArcRotateCamera(
       "camera",
       Math.PI / 2,
       Math.PI / 3.2,
@@ -32,9 +33,9 @@ class Game {
       this.scene
     );
 
-    camera.attachControl(el);
-    camera.wheelPrecision = 30
-    camera.pinchPrecision = 100
+    // this.camera.attachControl(el, false);
+    this.camera.wheelPrecision = 30
+    this.camera.pinchPrecision = 100
 
     // const light = new BABYLON.DirectionalLight(
     //   "light",
@@ -53,7 +54,7 @@ class Game {
       "default", // The name of the pipeline
       true, // Do you want HDR textures ?
       this.scene, // The scene instance
-      [camera] // The list of cameras to be attached to
+      [this.camera] // The list of cameras to be attached to
     );
     // pipeline.chromaticAberrationEnabled = true;
     // pipeline.chromaticAberration.aberrationAmount = 35;
@@ -84,7 +85,7 @@ class Game {
 
   setGraphicalSettings() {
     if (!HardwareInfo.hasGoodVideoCard()) {
-      this.engine.setHardwareScalingLevel(1.3)
+      // this.engine.setHardwareScalingLevel(1.3)
     }
     this.engine.renderEvenInBackground = false
   }
