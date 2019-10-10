@@ -1,29 +1,30 @@
 {
   "name": "yesmansky",
   "version": "0.0.1",
-  "main": "main.js",
   "author": "Zizaco",
   "license": "MIT",
+  "private": true,
   "scripts": {
-    "start": "webpack-dev-server --config webpack.config.dev.js",
-    "build": "webpack --config webpack.config.prod.js",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start": "vue-cli-service serve",
+    "serve": "vue-cli-service serve",
+    "build": "vue-cli-service build"
   },
   "dependencies": {
-    "@babylonjs/core": "^4.1.0-alpha.23",
+    "@babylonjs/core": "4.1.0-alpha.23",
+    "buefy": "^0.8.5",
     "localforage": "^1.7.3",
     "mobile-detect": "^1.4.4",
-    "open-simplex-noise": "^1.6.0"
+    "open-simplex-noise": "^1.6.0",
+    "vue": "^2.6.10"
   },
   "devDependencies": {
     "@types/localforage": "^0.0.34",
-    "copy-webpack-plugin": "^5.0.4",
-    "ts-loader": "^6.1.0",
-    "typescript": "^3.6.3",
-    "webpack": "^4.40.2",
-    "webpack-cli": "^3.3.8",
-    "webpack-dev-server": "^3.8.1",
-    "webpack-glsl-loader": "^1.0.1",
+    "@vue/cli-plugin-typescript": "^3.11.0",
+    "@vue/cli-service": "^3.11.0",
+    "node-sass": "^4.9.0",
+    "sass-loader": "^7.1.0",
+    "typescript": "3.6.3",
+    "vue-template-compiler": "^2.6.10",
     "worker-loader": "^2.0.0"
   }
 }

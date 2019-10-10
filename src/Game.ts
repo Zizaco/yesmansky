@@ -28,12 +28,12 @@ class Game {
       "camera",
       Math.PI / 2,
       Math.PI / 3.2,
-      2,
+      2.5,
       BABYLON.Vector3.Zero(),
       this.scene
     );
 
-    // this.camera.attachControl(el, false);
+    this.camera.attachControl(el, true);
     this.camera.wheelPrecision = 30
     this.camera.pinchPrecision = 100
 
@@ -73,7 +73,7 @@ class Game {
       pipeline.sharpen.edgeAmount = 0.8
     }
 
-    this.scene.debugLayer.show({ embedMode: true, overlay: true });
+    // this.scene.debugLayer.show({ embedMode: true, overlay: true });
     this.engine.runRenderLoop(() => this.render());
   }
 
