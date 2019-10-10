@@ -39,7 +39,7 @@
           </b-field>
         </b-field>
 
-        <b-field label="Landmass sizes">
+        <b-field label="Landmass scale">
           <b-slider v-model="settings.landMassSize" :value="50"></b-slider>
         </b-field>
 
@@ -105,10 +105,10 @@ export default Vue.extend({
       openned: false,
       planetInstance: this.planet,
       settings: {
-        terrainSeed: 'Foo',
+        terrainSeed: 'GIB GIB',
         type: 'terra',
         landMassSize: 80,
-        roughness: 2,
+        roughness: 1,
         seaLevel: 25,
         atmosphereDensity: 2,
         atmosphereColor: 'blue'
@@ -149,7 +149,7 @@ export default Vue.extend({
     rebuildPlanet: function (newSettings) {
       console.log('rebuilding planet...')
       this.planetInstance.dispose()
-      this.planetInstance = new Planet('planet', newSettings, this.game.scene)
+      this.game.planet = this.planetInstance = new Planet('planet', newSettings, this.game.scene)
     }
   }
 })

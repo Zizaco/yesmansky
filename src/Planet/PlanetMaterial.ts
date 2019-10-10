@@ -27,10 +27,16 @@ class PlanetMaterial {
     this.scene = scene
     this.options = options
     this._noiseSettings = [
-      // { shift: 0, passes: 10, strength: 0.8, roughness: 0.6, resistance: 0.70, min: 0.2, hard: false }, // base
-      // { shift: 18, passes: 15, strength: 0.8, roughness: 0.3, resistance: 0.65, min: 0.2, hard: true }, // erosion
-      { "shift": 5, "passes": 14, "strength": 0.65, "roughness": 0.2, "resistance": 0.6, "min": 0.3, "hard": true }
+      // { "shift": 5, "passes": 14, "strength": 0.65, "roughness": 0.2, "resistance": 0.6, "min": options.seaLevel * 0.01, "hard": true }
+      { "shift": 5, "passes": 14, "strength": 0.65, "roughness": 2.1 - this.options.landMassSize * 0.02, "resistance": 0.6, "min": options.seaLevel * 0.01, "hard": true }
     ]
+
+    if (options.roughness > 1) {
+      this._noiseSettings.unshift({ shift: 18, passes: 15, strength: 0.45, roughness: 0.3, resistance: 0.65, min: options.seaLevel * 0.01, hard: true })
+    }
+    if (options.roughness > 2) {
+      this._noiseSettings.unshift({ shift: 0, passes: 10, strength: 0.8, roughness: 0.6, resistance: 0.70, min: options.seaLevel * 0.01, hard: true })
+    }
   }
 
   get raw(): BABYLON.StandardMaterial {
@@ -66,7 +72,7 @@ class PlanetMaterial {
 
   dispose() {
     if (this._raw) {
-      this.heightMap.dispose
+      this.heightMap.dispose()
       this._rawAtmosphere.dispose(true, true)
       setTimeout(() => this._raw.dispose(true, true), 5000)
     }
@@ -77,12 +83,14 @@ class PlanetMaterial {
    */
   protected generateMaterial(scene): BABYLON.Material {
     this._raw = new BABYLON.StandardMaterial(this.name, scene);
+    this._raw.wireframe = true // hide ugly textureless sphere
 
     this.generateBaseTextures(256).then(() => {
       this._raw.diffuseTexture = this.diffuseMap
       this._raw.specularTexture = this.specularMap
       this._raw.bumpTexture = this.bumpMap
       this._raw.bumpTexture.level = 0.2
+      this._raw.wireframe = false
 
       this.generateBaseTextures(512).then(() => {
         this._raw.diffuseTexture.dispose()
@@ -103,7 +111,7 @@ class PlanetMaterial {
           this._raw.diffuseTexture = this.diffuseMap
           this._raw.specularTexture = this.specularMap
           this._raw.bumpTexture = this.bumpMap
-          this._raw.bumpTexture.level = 0.45
+          this._raw.bumpTexture.level = this.options.roughness > 0 ? 0.45 : 0.05
 
           // this._superRaw = this.buildShader(this.diffuseMap, this.specularMap, this.bumpMap)
         }).catch((e) => console.error(e))
@@ -117,21 +125,35 @@ class PlanetMaterial {
   }
 
   protected generateAtmosphere(scene): BABYLON.Material {
+    const atmosphereColors = {
+      blue: new BABYLON.Color3(0.1, 0.3, 0.5),
+      orange: new BABYLON.Color3(0.5, 0.4, 0.2),
+      white: new BABYLON.Color3(0.3, 0.3, 0.4),
+      green: new BABYLON.Color3(0.2, 0.3, 0.17),
+      purple: new BABYLON.Color3(0.35, 0.2, 0.3)
+    }
+
     this._rawAtmosphere = new BABYLON.StandardMaterial(`${this.name}Atmosphere`, scene);
     this._rawAtmosphere.reflectionTexture = new BABYLON.Texture("textures/atmosphere.png", scene);
     this._rawAtmosphere.diffuseTexture = new BABYLON.Texture("textures/planetClouds1.jpg", scene);
+    this._rawAtmosphere.diffuseTexture.level = Math.min(this.options.atmosphereDensity, 1.2)
     this._rawAtmosphere.reflectionTexture.coordinatesMode = BABYLON.Texture.SPHERICAL_MODE;
-    this._rawAtmosphere.alpha = 0.5
-    this._rawAtmosphere.alphaMode = BABYLON.Engine.ALPHA_ADD
+    this._rawAtmosphere.alpha = (this.options.atmosphereDensity + 1) * 0.15
+    this._rawAtmosphere.alphaMode = ['orange', 'green'].includes(this.options.atmosphereColor) ? BABYLON.Engine.ALPHA_MAXIMIZED : BABYLON.Engine.ALPHA_ADD
     this._rawAtmosphere.specularPower = 2.5
     this._rawAtmosphere.zOffset = -5
-    this._rawAtmosphere.specularColor = new BABYLON.Color3(0.1, 0.3, 0.5)
+    this._rawAtmosphere.specularColor = atmosphereColors[this.options.atmosphereColor]
+    if (this.options.atmosphereColor === 'green') {
+      this._rawAtmosphere.diffuseColor = this._rawAtmosphere.specularColor.scale(1.7)
+    }
+    if (this.options.atmosphereDensity >= 3) {
+      this._rawAtmosphere.specularColor = this._rawAtmosphere.specularColor.scale(1.7)
+    }
 
     return this._rawAtmosphere
   }
 
   async generateBaseTextures(resolution: number) {
-    const settings = { layers: 10, strength: 0.8, roughness: 0.6, resistance: 0.70, min: 0.5 }
     const oldHeightMap = this.heightMap
 
     this.heightMap = new BABYLON.DynamicTexture("planetHeightMap", resolution, this.scene, true)
