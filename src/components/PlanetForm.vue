@@ -6,9 +6,7 @@
           Procedural generation settings
         </a>
         <a href="#" class="card-header-icon" aria-label="more options">
-        <span class="icon">
-          <i class="fas fa-angle-down" aria-hidden="true"></i>
-        </span>
+          <b-icon :icon="openned ? 'chevron-down' : 'chevron-right'"></b-icon>
         </a>
       </header>
 
@@ -19,9 +17,6 @@
             <b-input v-model="settings.terrainSeed" expanded placeholder="Seed..."></b-input>
             <p class="control">
               <b-button class="button is-warning">Random</b-button>
-            </p>
-            <p class="control">
-              <b-button class="button is-primary">Apply</b-button>
             </p>
           </b-field>
         </b-field>
@@ -93,14 +88,22 @@
 </template>
 
 <script lang="ts">
+import _ from 'lodash';
 import Vue from 'vue';
+import { Planet } from '../Planet/Planet';
+import { Game } from '../Game';
 
 export default Vue.extend({
   name: 'PlanetForm',
+  props: {
+    game: Game,
+    planet: Planet
+  },
   data: function () {
     return {
       alpha: 0,
       openned: false,
+      planetInstance: this.planet,
       settings: {
         terrainSeed: 'Foo',
         type: 'terra',
@@ -112,10 +115,21 @@ export default Vue.extend({
       }
     }
   },
+  created: function () {
+    this.rebuildPlanet = _.debounce(this.rebuildPlanet, 2000)
+  },
   mounted: function () {
     setTimeout(() => {
       this.fadeIn()
     }, 4000);
+  },
+  watch: {
+    settings: {
+      handler (newSettings) {
+        this.rebuildPlanet(newSettings)
+      },
+      deep: true
+    }
   },
   methods: {
     save: function () {
@@ -123,9 +137,6 @@ export default Vue.extend({
       for (const key in this.settings) {
         saveContents.push(this.settings[key])
       }
-
-      console.log(JSON.stringify(this.settings))
-      console.log(JSON.stringify(saveContents))
     },
     fadeIn: function () {
       const disapear = setInterval(() => {
@@ -134,6 +145,11 @@ export default Vue.extend({
           clearInterval(disapear)
         }
       }, 50)
+    },
+    rebuildPlanet: function (newSettings) {
+      console.log('rebuilding planet...')
+      this.planetInstance.dispose()
+      this.planetInstance = new Planet('planet', newSettings, this.game.scene)
     }
   }
 })

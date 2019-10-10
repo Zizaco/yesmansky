@@ -11,7 +11,7 @@ type BuiltTextures = {
 }
 
 class TextureBuilder {
-  static buildTextures(noiseSettings: NoiseSettings, heightMapImage: ImageData, specularMapImage: ImageData, diffuseMapImage: ImageData): Promise<BuiltTextures> {
+  static buildTextures(seed: number, noiseSettings: NoiseSettings, heightMapImage: ImageData, specularMapImage: ImageData, diffuseMapImage: ImageData): Promise<BuiltTextures> {
     const worker = new backgroundWorker()
 
     return new Promise((resolve) => {
@@ -30,15 +30,15 @@ class TextureBuilder {
         })
         worker.terminate()
       });
-      worker.postMessage([noiseSettings, heightMapImage.data, specularMapImage.data, diffuseMapImage.data])
+      worker.postMessage([seed, noiseSettings, heightMapImage.data, specularMapImage.data, diffuseMapImage.data])
     })
   }
 
-  static async _buildTextures(heightMapImage: ImageData, specularMapImage: ImageData, diffuseMapImage: ImageData): Promise<BuiltTextures> {
+  static async _buildTextures(seed: number, heightMapImage: ImageData, specularMapImage: ImageData, diffuseMapImage: ImageData): Promise<BuiltTextures> {
     const settings = { layers: 10, strength: 0.8, roughness: 0.6, resistance: 0.70, min: 0.5 }
     const baseRoughness = settings.roughness / 100
 
-    const openSimplex = new OpenSimplexNoise(27);
+    const openSimplex = new OpenSimplexNoise(seed);
 
     const heightData = heightMapImage.data
     const specularData = specularMapImage.data

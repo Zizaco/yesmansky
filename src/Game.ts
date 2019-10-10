@@ -13,6 +13,7 @@ class Game {
   engine: BABYLON.Engine
   scene: BABYLON.Scene
   camera: BABYLON.ArcRotateCamera
+  planet: Planet
 
   constructor(el: HTMLCanvasElement) {
     const engineOptions = {
@@ -46,7 +47,7 @@ class Game {
       new BABYLON.Vector3(0, 1, 0),
       this.scene);
 
-    (window as any).planet = new Planet('planet', this.scene)
+    this.planet = (window as any).planet = new Planet('planet', {}, this.scene)
     // const mesh = BABYLON.MeshBuilder.CreateGround("mesh", {}, this.scene);
 
     // Rendering pipeline
@@ -73,7 +74,7 @@ class Game {
       pipeline.sharpen.edgeAmount = 0.8
     }
 
-    // this.scene.debugLayer.show({ embedMode: true, overlay: true });
+    this.scene.debugLayer.show({ embedMode: true, overlay: true });
     this.engine.runRenderLoop(() => this.render());
   }
 

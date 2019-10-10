@@ -1,3 +1,14 @@
+type PlanetOptions = {
+  terrainSeed: string,
+  type: 'terra',
+  landMassSize: number,
+  roughness: number,
+  seaLevel: number,
+  atmosphereDensity: number,
+  atmosphereColor: "blue" | "orange" | "white" | "green" | "purple",
+  meshOptions: { diameter: number, diameterX: number, subdivisions: number }
+}
+
 type NoiseSettings = Array<{
   shift: number,
   passes: number,
@@ -8,4 +19,4 @@ type NoiseSettings = Array<{
   hard: boolean
 }>
 
-export { NoiseSettings }
+export { NoiseSettings, PlanetOptions }

@@ -11,18 +11,14 @@ type BuiltTextures = {
 }
 
 ctx.addEventListener("message", async (event) => {
-  const result = await _buildTextures(...(event.data as [NoiseSettings, Uint8ClampedArray, Uint8ClampedArray, Uint8ClampedArray]))
+  const result = await _buildTextures(...(event.data as [number, NoiseSettings, Uint8ClampedArray, Uint8ClampedArray, Uint8ClampedArray]))
   ctx.postMessage(result)
 });
 
-const _buildTextures = async (noiseSettings: NoiseSettings, heightData: Uint8ClampedArray, specularData: Uint8ClampedArray, diffuseData: Uint8ClampedArray): Promise<BuiltTextures> => {
+const _buildTextures = async (seed: number, noiseSettings: NoiseSettings, heightData: Uint8ClampedArray, specularData: Uint8ClampedArray, diffuseData: Uint8ClampedArray): Promise<BuiltTextures> => {
   const settings = noiseSettings
-  // const settings = [
-  //   { shift: 0, passes: 10, strength: 0.8, roughness: 0.6, resistance: 0.70, min: 0.2, hard: false }, // base
-  //   { shift: 18, passes: 15, strength: 0.8, roughness: 0.3, resistance: 0.65, min: 0.2, hard: true }, // erosion
-  // ]
 
-  const openSimplex = new OpenSimplexNoise(27);
+  const openSimplex = new OpenSimplexNoise(seed);
 
   const numberOfPixels = heightData.length / 4
   const colorGradientValues = diffuseData.slice(0, 256 * 4)

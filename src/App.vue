@@ -4,7 +4,7 @@
     <div id="ui" class="container is-fluid">
       <Hello msg="Welcome to Your Vue.js + TypeScript + BabylonJS App"/>
       <div id="main-grid" class="columns">
-        <PlanetForm></PlanetForm>
+        <PlanetForm v-if="planet" :planet="planet" :game="game"></PlanetForm>
       </div>
       <Footer></Footer>
     </div>
@@ -27,14 +27,17 @@ export default Vue.extend({
   },
   data: function () {
     return {
-      canvasBlur: 10
+      canvasBlur: 10,
+      game: undefined,
+      planet: undefined
     }
   },
   mounted: function () {
     const view = document.getElementById("view") as HTMLCanvasElement
     view.width = window.innerWidth
     view.height = window.innerHeight
-    window.game = new Game(view)
+    this.game = window.game = new Game(view)
+    this.planet = window.game.planet
     setTimeout(() => {
       this.unblur()
     }, 4000);

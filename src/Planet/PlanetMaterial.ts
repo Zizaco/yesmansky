@@ -2,15 +2,18 @@ import * as BABYLON from '@babylonjs/core/Legacy/legacy'
 import { HardwareInfo } from "../Infrastructure/HardwareInfo"
 import { TextureBuilder } from './TextureBuilder'
 import { ColorGradientFactory } from './ColorGradientFactory'
-import { NoiseSettings } from './types'
+import { NoiseSettings, PlanetOptions } from './types'
 
 const normalize = (val, min, max) => ((val - min) / (max - min))
+const hashStringToInt = (s: string) => {
+  return s.split("").reduce(function (a, b) { a = ((a << 5) - a) + b.charCodeAt(0); return a & a }, 0);
+}
 
 class PlanetMaterial {
   name: string
-  seed: number
-  _noiseSettings: NoiseSettings
+  options: PlanetOptions
   scene: BABYLON.Scene
+  _noiseSettings: NoiseSettings
   _raw: BABYLON.StandardMaterial
   _rawAtmosphere: BABYLON.StandardMaterial
   _superRaw: BABYLON.Material
@@ -19,10 +22,10 @@ class PlanetMaterial {
   specularMap: BABYLON.DynamicTexture
   bumpMap: BABYLON.DynamicTexture
 
-  constructor(name: string = 'planetTexture', options: any, scene: BABYLON.Scene) {
+  constructor(name: string = 'planetTexture', options: PlanetOptions, scene: BABYLON.Scene) {
     this.name = name
     this.scene = scene
-    this.seed = Math.random()*128
+    this.options = options
     this._noiseSettings = [
       // { shift: 0, passes: 10, strength: 0.8, roughness: 0.6, resistance: 0.70, min: 0.2, hard: false }, // base
       // { shift: 18, passes: 15, strength: 0.8, roughness: 0.3, resistance: 0.65, min: 0.2, hard: true }, // erosion
@@ -59,6 +62,14 @@ class PlanetMaterial {
 
   get noiseSettings(): NoiseSettings {
     return this._noiseSettings
+  }
+
+  dispose() {
+    if (this._raw) {
+      this.heightMap.dispose
+      this._rawAtmosphere.dispose(true, true)
+      setTimeout(() => this._raw.dispose(true, true), 5000)
+    }
   }
 
   /**
@@ -131,7 +142,7 @@ class PlanetMaterial {
     const specularMapCtx = this.specularMap.getContext();
     const diffuseMapCtx = this.diffuseMap.getContext();
 
-    const colorGradient = ColorGradientFactory.generateGradient(this.seed)
+    const colorGradient = ColorGradientFactory.generateGradient(hashStringToInt(this.options.terrainSeed))
 
     const sphereNormalTexture = new Image();
     sphereNormalTexture.src = `textures/planetObjectSpaceNormal.png`;
@@ -156,7 +167,7 @@ class PlanetMaterial {
     diffuseMapCtx.fillRect(0, 0, 256, 5);
     const diffuseMapImage = diffuseMapCtx.getImageData(0, 0, resolution, resolution)
 
-    const { heightDataResult, specularDataResult, diffuseDataResult } = await TextureBuilder.buildTextures(this._noiseSettings, heightMapImage, specularMapImage, diffuseMapImage)
+    const { heightDataResult, specularDataResult, diffuseDataResult } = await TextureBuilder.buildTextures(hashStringToInt(this.options.terrainSeed), this._noiseSettings, heightMapImage, specularMapImage, diffuseMapImage)
 
     heightMapCtx.putImageData(heightMapImage, 0, 0);
     specularMapCtx.putImageData(specularMapImage, 0, 0);

@@ -1,43 +1,42 @@
 import * as BABYLON from '@babylonjs/core/Legacy/legacy'
 import { PlanetMesh } from './PlanetMesh'
-import OpenSimplexNoise from 'open-simplex-noise'
-import { HardwareInfo } from '../Infrastructure/HardwareInfo'
 import { PlanetMaterial } from './PlanetMaterial'
-
-type VertexNormals = BABYLON.FloatArray
-type VertexUV = BABYLON.FloatArray
-const normalize = (val, min, max) => ((val - min) / (max - min))
+import { PlanetOptions } from './types'
 
 /**
  * @see https://www.redblobgames.com/maps/terrain-from-noise/
  * @see https://www.redblobgames.com/maps/mapgen4/
  */
 class Planet extends BABYLON.TransformNode {
-  seed: string
   mesh: PlanetMesh
   material: PlanetMaterial
   scene: BABYLON.Scene
+  options: PlanetOptions
 
-  constructor(name: string = 'planet', scene) {
+  constructor(name: string = 'planet', options: any, scene: BABYLON.Scene) {
     super(name)
     this.scene = scene
-    const options = { diameter: 1, diameterX: 1, subdivisions: 25 }
+    this.options = {
+      terrainSeed: 'Foo',
+      type: 'terra',
+      landMassSize: 80,
+      roughness: 2,
+      seaLevel: 25,
+      atmosphereDensity: 2,
+      atmosphereColor: 'blue',
+      meshOptions: { diameter: 1, diameterX: 1, subdivisions: 25 },
+      ...options
+    }
 
-    this.mesh = new PlanetMesh(name, options as any, scene)
+    this.mesh = new PlanetMesh(name, this.options.meshOptions as any, scene)
     this.mesh.setParent(this)
 
-    this.material = new PlanetMaterial('myPlanetMat', {}, scene)
-
-    setTimeout(() => {
-      this.mesh.material = this.material.raw
-      this.mesh.atmosphereMaterial = this.material.rawAtmosphere
-    }, 100)
-
-    setTimeout(() => {
-      // this.mesh.material = this.material._superRaw
-    }, 7000)
+    this.material = new PlanetMaterial('myPlanetMat', this.options, scene)
+    this.mesh.material = this.material.raw
+    this.mesh.atmosphereMaterial = this.material.rawAtmosphere
 
     this.setInspectableProperties()
+    this.setDisposeProcess()
   }
 
   set subdivisions(value: number) {
@@ -75,6 +74,12 @@ class Planet extends BABYLON.TransformNode {
         type: BABYLON.InspectableType.String
       }
     ]
+  }
+
+  protected setDisposeProcess() {
+    this.onDisposeObservable.add(() => {
+      this.material.dispose()
+    })
   }
 }
 
