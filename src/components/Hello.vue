@@ -1,5 +1,5 @@
 <template>
-  <section v-if="alpha > 0" v-bind:style="`opacity: ${alpha};`" class="hero is-medium is-dark is-bold">
+  <section id='hero' v-if="alpha > 0" v-bind:style="`opacity: ${alpha};`" class="hero is-medium is-dark is-bold">
     <div class="hero-body">
       <div class="container has-text-centered">
         <h1 class="title">
@@ -42,6 +42,11 @@ export default Vue.extend({
 </script>
 
 <style lang="scss" scoped>
+#hero {
+  position: absolute;
+  width: 100%
+}
+
 .hero.is-dark.is-bold {
   margin-top: 15%;
   background-color: rgba(0,0,0,0.7);
