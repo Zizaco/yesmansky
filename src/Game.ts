@@ -44,7 +44,7 @@ class Game {
     //   this.scene);
     const light = new BABYLON.HemisphericLight(
       "light",
-      new BABYLON.Vector3(0, 1, 0),
+      new BABYLON.Vector3(0.5, 1, 0),
       this.scene);
 
     this.planet = (window as any).planet = new Planet('planet', {}, this.scene)
@@ -62,16 +62,20 @@ class Game {
     // pipeline.chromaticAberration.radialIntensity = 1;
     // pipeline.chromaticAberration.centerPosition.y = 0.35;
 
-    pipeline.fxaaEnabled = true
+    pipeline.imageProcessingEnabled = true
+    pipeline.imageProcessing.contrast = 1.2
+    pipeline.fxaaEnabled = false
+    pipeline.bloomEnabled = true
     pipeline.sharpenEnabled = true
     pipeline.grainEnabled = true
     pipeline.grain.intensity = 5
     pipeline.grain.animated = true
     pipeline.sharpen.colorAmount = 1
     if (HardwareInfo.hasGoodVideoCard()) {
-      pipeline.sharpen.edgeAmount = 1.4
+      pipeline.samples = 4
+      pipeline.sharpen.edgeAmount = 0.4
     } else {
-      pipeline.sharpen.edgeAmount = 0.8
+      pipeline.sharpen.edgeAmount = 0.2
     }
 
     this.scene.debugLayer.show({ embedMode: true, overlay: true });

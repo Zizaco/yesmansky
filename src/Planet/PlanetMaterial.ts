@@ -130,7 +130,7 @@ class PlanetMaterial {
       orange: new BABYLON.Color3(0.5, 0.4, 0.2),
       white: new BABYLON.Color3(0.3, 0.3, 0.4),
       green: new BABYLON.Color3(0.2, 0.3, 0.17),
-      purple: new BABYLON.Color3(0.35, 0.2, 0.3)
+      purple: new BABYLON.Color3(0.45, 0.2, 0.45)
     }
 
     this._rawAtmosphere = new BABYLON.StandardMaterial(`${this.name}Atmosphere`, scene);
@@ -139,7 +139,11 @@ class PlanetMaterial {
     this._rawAtmosphere.diffuseTexture.level = Math.min(this.options.atmosphereDensity, 1.2)
     this._rawAtmosphere.reflectionTexture.coordinatesMode = BABYLON.Texture.SPHERICAL_MODE;
     this._rawAtmosphere.alpha = (this.options.atmosphereDensity + 1) * 0.15
-    this._rawAtmosphere.alphaMode = ['orange', 'green'].includes(this.options.atmosphereColor) ? BABYLON.Engine.ALPHA_MAXIMIZED : BABYLON.Engine.ALPHA_ADD
+    if (this.options.atmosphereDensity > 1 && ['orange', 'green'].includes(this.options.atmosphereColor)) {
+      this._rawAtmosphere.alphaMode = BABYLON.Engine.ALPHA_MAXIMIZED
+    } else {
+      this._rawAtmosphere.alphaMode = BABYLON.Engine.ALPHA_ADD
+    }
     this._rawAtmosphere.specularPower = 2.5
     this._rawAtmosphere.zOffset = -5
     this._rawAtmosphere.specularColor = atmosphereColors[this.options.atmosphereColor]

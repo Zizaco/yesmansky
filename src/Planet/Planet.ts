@@ -17,7 +17,7 @@ class Planet extends BABYLON.TransformNode {
     super(name)
     this.scene = scene
     this.options = {
-      terrainSeed: 'GIB GIB',
+      terrainSeed: 'GIB GIB', // 'Foo' was also a good initial value
       type: 'terra',
       landMassSize: 80,
       roughness: 2,
