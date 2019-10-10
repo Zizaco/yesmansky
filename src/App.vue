@@ -54,6 +54,7 @@ export default Vue.extend({
 
 <style lang="scss">
 @import './assets/bulma-theme';
+@import './assets/fix-inspector';
 
 body{
   overflow: hidden;
