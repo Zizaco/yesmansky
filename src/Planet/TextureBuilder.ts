@@ -19,9 +19,11 @@ class TextureBuilder {
       //   resolve(...result)
       // })
       worker.addEventListener("message", (event) => {
+        console.time('allMapImage.data.set(...')
         heightMapImage.data.set(event.data.heightData)
         specularMapImage.data.set(event.data.specularData)
         diffuseMapImage.data.set(event.data.diffuseData)
+        console.timeEnd('allMapImage.data.set(...')
 
         resolve({
           heightDataResult: heightMapImage,

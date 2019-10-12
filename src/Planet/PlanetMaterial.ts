@@ -176,8 +176,6 @@ class PlanetMaterial {
       sphereNormalTexture.onload = () => resolve()
     })
 
-    console.time('generateBaseTextures')
-
     heightMapCtx.drawImage(sphereNormalTexture as CanvasImageSource, 0, 0, resolution, resolution)
     const heightMapImage = heightMapCtx.getImageData(0, 0, resolution, resolution)
 
@@ -195,19 +193,21 @@ class PlanetMaterial {
 
     const { heightDataResult, specularDataResult, diffuseDataResult } = await TextureBuilder.buildTextures(hashStringToInt(this.options.terrainSeed), this._noiseSettings, heightMapImage, specularMapImage, diffuseMapImage)
 
+    console.time('putImageData(...')
     heightMapCtx.putImageData(heightMapImage, 0, 0);
     specularMapCtx.putImageData(specularMapImage, 0, 0);
     diffuseMapCtx.putImageData(diffuseMapImage, 0, 0);
     this.heightMap.update();
     this.specularMap.update();
     this.diffuseMap.update();
+    console.timeEnd('putImageData(...')
+    console.time('generateNormalMap')
     this.bumpMap = this.generateNormalMap(heightMapImage, resolution)
+    console.timeEnd('generateNormalMap')
 
     if (oldHeightMap) {
       setTimeout(() => oldHeightMap.dispose(), 2000)
     }
-
-    console.timeEnd('generateBaseTextures')
     console.log(resolution)
   }
 

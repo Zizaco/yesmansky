@@ -16,7 +16,7 @@
           <b-field>
             <b-input v-model="settings.terrainSeed" expanded placeholder="Seed..."></b-input>
             <p class="control">
-              <b-button class="button is-warning">Random</b-button>
+              <b-button v-on:click="setRandomSeed" class="button is-warning">Random</b-button>
             </p>
           </b-field>
         </b-field>
@@ -79,8 +79,8 @@
         </b-field>
       </div>
       <footer class="card-footer">
-        <a v-on:click="save" class="card-footer-item button is-primary">Save</a>
-        <a href="#" class="card-footer-item button is-warning">Randomize</a>
+        <a v-on:click="save" class="card-footer-item button is-primary" disabled>Save</a>
+        <a v-on:click="setRandomSettings" class="card-footer-item button is-warning">Randomize</a>
         <a v-if="openned" v-on:click="openned = false" class="card-footer-item button is-text">Close</a>
       </footer>
     </div>
@@ -137,6 +137,21 @@ export default Vue.extend({
       for (const key in this.settings) {
         saveContents.push(this.settings[key])
       }
+    },
+    setRandomSeed: function () {
+      const baseName = ['Planet ', 'Moon ', 'Rogue ', 'Exo ', 'Dwarf ', 'Earth ', 'Hypothetical ', '', '', '']
+      const randomBaseName = baseName[Math.floor(Math.random()*baseName.length)]
+      const randomNamePart = Math.random().toString(36).substring(6+Math.random()*6);
+      this.settings.terrainSeed = `${randomBaseName}${randomNamePart}`
+    },
+    setRandomSettings: function () {
+      const possibleAtmospheres = ['blue', 'orange', 'white', 'green', 'purple']
+      this.setRandomSeed()
+      this.settings.landMassSize = Math.round(Math.random()*70+10)
+      this.settings.roughness = Math.round(Math.random()*4)
+      this.settings.seaLevel = Math.round(Math.random()*55)
+      this.settings.atmosphereDensity = Math.round(Math.random()*4)
+      this.settings.atmosphereColor = possibleAtmospheres[Math.floor(Math.random()*possibleAtmospheres.length)]
     },
     fadeIn: function () {
       const disapear = setInterval(() => {
