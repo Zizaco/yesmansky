@@ -81,7 +81,7 @@
       <footer class="card-footer">
         <a v-on:click="save" class="card-footer-item button is-primary" disabled>Save</a>
         <a v-on:click="setRandomSettings" class="card-footer-item button is-warning">Randomize</a>
-        <a v-if="openned" v-on:click="openned = false" class="card-footer-item button is-text">Close</a>
+        <a v-on:click="openned = !openned" class="card-footer-item button is-text">{{ openned ? 'Close' : 'Settings' }} </a>
       </footer>
     </div>
   </div>
@@ -137,12 +137,14 @@ export default Vue.extend({
       for (const key in this.settings) {
         saveContents.push(this.settings[key])
       }
+      return saveContents.join('|')
     },
     setRandomSeed: function () {
       const baseName = ['Planet ', 'Moon ', 'Rogue ', 'Exo ', 'Dwarf ', 'Earth ', 'Hypothetical ', '', '', '']
       const randomBaseName = baseName[Math.floor(Math.random()*baseName.length)]
       const randomNamePart = Math.random().toString(36).substring(6+Math.random()*6);
-      this.settings.terrainSeed = `${randomBaseName}${randomNamePart}`
+      this.settings.terrainSeed = `${randomBaseName}${randomNamePart}`;
+      (this as any).$ga.event('Planet', 'random', 'seed')
     },
     setRandomSettings: function () {
       const possibleAtmospheres = ['blue', 'orange', 'white', 'green', 'purple']
@@ -151,7 +153,8 @@ export default Vue.extend({
       this.settings.roughness = Math.round(Math.random()*4)
       this.settings.seaLevel = Math.round(Math.random()*55)
       this.settings.atmosphereDensity = Math.round(Math.random()*4)
-      this.settings.atmosphereColor = possibleAtmospheres[Math.floor(Math.random()*possibleAtmospheres.length)]
+      this.settings.atmosphereColor = possibleAtmospheres[Math.floor(Math.random()*possibleAtmospheres.length)];
+      (this as any).$ga.event('Planet', 'random', 'settings')
     },
     fadeIn: function () {
       const disapear = setInterval(() => {
@@ -162,8 +165,9 @@ export default Vue.extend({
       }, 50)
     },
     rebuildPlanet: function (newSettings) {
-      console.log('rebuilding planet...')
-      this.planetInstance.dispose()
+      console.log('rebuilding planet...');
+      this.planetInstance.dispose();
+      (this as any).$ga.event('Planet', 'changed', this.save())
       this.game.planet = this.planetInstance = new Planet('planet', newSettings, this.game.scene)
     }
   }

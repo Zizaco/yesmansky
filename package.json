@@ -16,7 +16,8 @@
     "lodash": "^4.17.15",
     "mobile-detect": "^1.4.4",
     "open-simplex-noise": "^1.6.0",
-    "vue": "^2.6.10"
+    "vue": "^2.6.10",
+    "vue-analytics": "^5.17.2"
   },
   "devDependencies": {
     "@types/localforage": "^0.0.34",
