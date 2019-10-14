@@ -68,7 +68,7 @@
           </section>
         </b-field>
 
-        <b-field label="Primary composition">
+        <b-field label="Main composition">
           <b-select v-model="settings.atmosphereColor" placeholder="Choose" expanded>
             <option value="blue">Oxygen & Nitrogen</option>
             <option value="orange">Carbon Dioxide</option>
