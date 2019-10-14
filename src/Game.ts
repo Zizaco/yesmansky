@@ -78,7 +78,7 @@ class Game {
       pipeline.sharpen.edgeAmount = 0.2
     }
 
-    this.scene.debugLayer.show({ embedMode: true, overlay: true });
+    // this.scene.debugLayer.show({ embedMode: true, overlay: true });
     this.engine.runRenderLoop(() => this.render());
   }
 
