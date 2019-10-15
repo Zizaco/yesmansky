@@ -2,7 +2,7 @@
   <div id="app">
     <canvas id="view" width="500" height="500" v-bind:style="{ filter: `blur(${canvasBlur}px)` }"></canvas>
     <div id="ui" class="container is-fluid">
-      <Hello msg="Welcome to Your Vue.js + TypeScript + BabylonJS App"/>
+      <Hello></Hello>
       <div id="main-grid" class="columns">
         <PlanetForm v-if="planet" :planet="planet" :game="game"></PlanetForm>
       </div>
@@ -36,8 +36,10 @@ export default Vue.extend({
     const view = document.getElementById("view") as HTMLCanvasElement
     view.width = window.innerWidth
     view.height = window.innerHeight
-    this.game = window.game = new Game(view)
+
+    this.game = window.game = new Game(view) // Instantiate game
     this.planet = window.game.planet
+
     setTimeout(() => {
       this.unblur()
     }, 4000);

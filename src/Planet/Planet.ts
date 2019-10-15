@@ -1,15 +1,21 @@
 import * as BABYLON from '@babylonjs/core/Legacy/legacy'
 import { PlanetMesh } from './PlanetMesh'
-import { PlanetMaterial } from './PlanetMaterial'
+import { PlanetMaterialManager } from './PlanetMaterialManager'
 import { PlanetOptions } from './types'
 
 /**
+ * Extends TransformNode to make it like a native babylon mesh
+ * that can be transformed (scaled, moved, rotated) with the
+ * same API.
+ *
+ * Generates a procedural planet based on options upon instantiation.
+ *
  * @see https://www.redblobgames.com/maps/terrain-from-noise/
  * @see https://www.redblobgames.com/maps/mapgen4/
  */
 class Planet extends BABYLON.TransformNode {
   mesh: PlanetMesh
-  material: PlanetMaterial
+  materialManager: PlanetMaterialManager
   scene: BABYLON.Scene
   options: PlanetOptions
 
@@ -31,9 +37,9 @@ class Planet extends BABYLON.TransformNode {
     this.mesh = new PlanetMesh(name, this.options.meshOptions as any, scene)
     this.mesh.setParent(this)
 
-    this.material = new PlanetMaterial('myPlanetMat', this.options, scene)
-    this.mesh.material = this.material.raw
-    this.mesh.atmosphereMaterial = this.material.rawAtmosphere
+    this.materialManager = new PlanetMaterialManager('myPlanetMat', this.options, scene)
+    this.mesh.material = this.materialManager.raw
+    this.mesh.atmosphereMaterial = this.materialManager.rawAtmosphere
 
     this.setInspectableProperties()
     this.setDisposeProcess()
@@ -48,16 +54,19 @@ class Planet extends BABYLON.TransformNode {
   }
 
   set noiseSettings(value: string) {
-    this.material.noiseSettings = JSON.parse(value)
+    this.materialManager.noiseSettings = JSON.parse(value)
     setTimeout(() => {
-      this.mesh.material = this.material.raw
+      this.mesh.material = this.materialManager.raw
     }, 100)
   }
 
   get noiseSettings(): string {
-    return JSON.stringify(this.material.noiseSettings)
+    return JSON.stringify(this.materialManager.noiseSettings)
   }
 
+  /**
+   * @see https://doc.babylonjs.com/how_to/debug_layer#inspector
+   */
   protected setInspectableProperties() {
     this.inspectableCustomProperties = [
       {
@@ -78,7 +87,7 @@ class Planet extends BABYLON.TransformNode {
 
   protected setDisposeProcess() {
     this.onDisposeObservable.add(() => {
-      this.material.dispose()
+      this.materialManager.dispose()
     })
   }
 }

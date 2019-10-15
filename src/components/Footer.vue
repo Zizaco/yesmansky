@@ -13,7 +13,7 @@ export default Vue.extend({
   name: 'Footer',
   methods: {
     goto: function() {
-      (this as any).$ga.event('Goto', 'author', 'https://github.com/Zizaco')
+      this.$ga.event('Goto', 'author', 'https://github.com/Zizaco')
     }
   }
 })

@@ -1,5 +1,8 @@
 const MobileDetect = require('mobile-detect')
 
+/**
+ * Support class that provides some hardware info utils
+ */
 class HardwareInfo {
   static detection = new MobileDetect(window.navigator.userAgent)
   static vendor: string

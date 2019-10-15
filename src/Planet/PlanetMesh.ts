@@ -24,6 +24,9 @@ class PlanetMesh extends BABYLON.TransformNode {
     scene.addTransformNode(this)
   }
 
+  /**
+   * overrides setter to apply material properly
+   */
   set material(value: BABYLON.Material) {
     this._material = value
     this.applyMaterial()
@@ -34,6 +37,9 @@ class PlanetMesh extends BABYLON.TransformNode {
     this.applyMaterial()
   }
 
+  /**
+   * To allow dynamic LOD change
+   */
   set subdivisions(value: number) {
     this._subdivisions = value
     this.buildMeshes()
@@ -154,6 +160,9 @@ class PlanetMesh extends BABYLON.TransformNode {
     this.atmosphereMesh.material = this._atmosphereMaterial
   }
 
+  /**
+   * @see https://doc.babylonjs.com/how_to/debug_layer#inspector
+   */
   protected setInspectableProperties() {
     this.inspectableCustomProperties = [
       {

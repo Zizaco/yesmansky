@@ -1,3 +1,9 @@
+/**
+ * web-worker that generates textures
+ * @see https://developer.mozilla.org/pt-PT/docs/Web/API/Web_Workers_API
+ * @see https://github.com/webpack-contrib/worker-loader
+ */
+
 import OpenSimplexNoise from 'open-simplex-noise'
 import { NoiseSettings } from './types'
 const ctx: Worker = self as any;
@@ -15,7 +21,16 @@ ctx.addEventListener("message", async (event) => {
   ctx.postMessage(result)
 });
 
-const _buildTextures = async (seed: number, noiseSettings: NoiseSettings, heightData: Uint8ClampedArray, specularData: Uint8ClampedArray, diffuseData: Uint8ClampedArray): Promise<BuiltTextures> => {
+/**
+ * Builds procedural texture based in given params and imageData
+ */
+const _buildTextures = async (
+  seed: number,
+  noiseSettings: NoiseSettings,
+  heightData: Uint8ClampedArray,
+  specularData: Uint8ClampedArray,
+  diffuseData: Uint8ClampedArray
+): Promise<BuiltTextures> => {
   const settings = noiseSettings
 
   const openSimplex = new OpenSimplexNoise(seed);

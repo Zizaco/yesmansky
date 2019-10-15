@@ -142,9 +142,9 @@ export default Vue.extend({
     setRandomSeed: function () {
       const baseName = ['Planet ', 'Moon ', 'Rogue ', 'Exo ', 'Dwarf ', 'Earth ', 'Hypothetical ', '', '', '']
       const randomBaseName = baseName[Math.floor(Math.random()*baseName.length)]
-      const randomNamePart = Math.random().toString(36).substring(6+Math.random()*6);
-      this.settings.terrainSeed = `${randomBaseName}${randomNamePart}`;
-      (this as any).$ga.event('Planet', 'random', 'seed')
+      const randomNamePart = Math.random().toString(36).substring(6+Math.random()*6)
+      this.settings.terrainSeed = `${randomBaseName}${randomNamePart}`
+      this.$ga.event('Planet', 'random', 'seed')
     },
     setRandomSettings: function () {
       const possibleAtmospheres = ['blue', 'orange', 'white', 'green', 'purple']

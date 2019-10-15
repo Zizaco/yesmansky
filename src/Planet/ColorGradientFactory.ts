@@ -7,6 +7,9 @@ type colorGradient = {
   gradient: Array<rgba>
 }
 
+/**
+ * Generate color pallets based in given seed
+ */
 class ColorGradientFactory {
   static generateGradient(seed): Array<rgba> {
     const openSimplex = new OpenSimplexNoise(seed);

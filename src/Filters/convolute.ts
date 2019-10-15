@@ -1,4 +1,4 @@
-const convolute = function (pixels: any, weights: Array<number>, opaque: boolean = false) {
+const convolute = (pixels: ImageData, output: ImageData, weights: number[], opaque: number, channel: string[] = ['r', 'g', 'b']) => {
   var side = Math.round(Math.sqrt(weights.length));
   var halfSide = Math.floor(side / 2);
   var src = pixels.data;
@@ -7,7 +7,6 @@ const convolute = function (pixels: any, weights: Array<number>, opaque: boolean
   // pad output by the convolution matrix
   var w = sw;
   var h = sh;
-  var output = {data: []};
   var dst = output.data;
   // go through the destination image pixels
   var alphaFac = opaque ? 1 : 0;
@@ -33,13 +32,13 @@ const convolute = function (pixels: any, weights: Array<number>, opaque: boolean
           }
         }
       }
-      dst[dstOff] = r;
-      dst[dstOff + 1] = g;
-      dst[dstOff + 2] = b;
+      channel.includes('r') ? dst[dstOff] += r / 3 : null
+      channel.includes('g') ? dst[dstOff + 1] += g / 3 : null
+      channel.includes('b') ? dst[dstOff + 2] += b / 3 : null
       dst[dstOff + 3] = a + alphaFac * (255 - a);
     }
   }
   return output;
-};
+}
 
 export { convolute }

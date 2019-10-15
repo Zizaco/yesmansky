@@ -3,20 +3,31 @@ import { HardwareInfo } from "../Infrastructure/HardwareInfo"
 import { TextureBuilder } from './TextureBuilder'
 import { ColorGradientFactory } from './ColorGradientFactory'
 import { NoiseSettings, PlanetOptions } from './types'
+import { convolute } from '../Filters/convolute'
 
-const normalize = (val, min, max) => ((val - min) / (max - min))
 const hashStringToInt = (s: string) => {
   return s.split("").reduce(function (a, b) { a = ((a << 5) - a) + b.charCodeAt(0); return a & a }, 0);
 }
 
-class PlanetMaterial {
+/**
+ * Planet Material Manager instantiates and manages raw BABYLON material
+ * objects. It handles procedural texture generation using web workers
+ * and swaps textures with higher resolution ones once they become
+ * available
+ *
+ * @example
+ *   const matManager = new PlanetMaterialManager(...myArgs)
+ *
+ *   myMesh.material = matManager.raw // asynchronously swaps textures when higher res are available
+ *   myAtmosphereMesh.material = matManager.rawAtmosphere
+ */
+class PlanetMaterialManager {
   name: string
   options: PlanetOptions
   scene: BABYLON.Scene
   _noiseSettings: NoiseSettings
   _raw: BABYLON.StandardMaterial
   _rawAtmosphere: BABYLON.StandardMaterial
-  _superRaw: BABYLON.Material
   heightMap: BABYLON.DynamicTexture
   diffuseMap: BABYLON.DynamicTexture
   specularMap: BABYLON.DynamicTexture
@@ -27,7 +38,6 @@ class PlanetMaterial {
     this.scene = scene
     this.options = options
     this._noiseSettings = [
-      // { "shift": 5, "passes": 14, "strength": 0.65, "roughness": 0.2, "resistance": 0.6, "min": options.seaLevel * 0.01, "hard": true }
       { "shift": 5, "passes": 14, "strength": 0.65, "roughness": 2.1 - this.options.landMassSize * 0.02, "resistance": 0.6, "min": options.seaLevel * 0.01, "hard": true }
     ]
 
@@ -100,7 +110,7 @@ class PlanetMaterial {
         this._raw.diffuseTexture = this.diffuseMap
         this._raw.specularTexture = this.specularMap
         this._raw.bumpTexture = this.bumpMap
-        this._raw.bumpTexture.level = 0.3
+        this._raw.bumpTexture.level = this.options.roughness > 0 ? 0.45 : 0.05
 
         this.generateBaseTextures(HardwareInfo.hasGoodVideoCard() ? 2048 : 1024).then(() => {
           this._raw.diffuseTexture.dispose()
@@ -112,8 +122,6 @@ class PlanetMaterial {
           this._raw.specularTexture = this.specularMap
           this._raw.bumpTexture = this.bumpMap
           this._raw.bumpTexture.level = this.options.roughness > 0 ? 0.45 : 0.05
-
-          // this._superRaw = this.buildShader(this.diffuseMap, this.specularMap, this.bumpMap)
         }).catch((e) => console.error(e))
       })
     })
@@ -193,14 +201,13 @@ class PlanetMaterial {
 
     const { heightDataResult, specularDataResult, diffuseDataResult } = await TextureBuilder.buildTextures(hashStringToInt(this.options.terrainSeed), this._noiseSettings, heightMapImage, specularMapImage, diffuseMapImage)
 
-    console.time('putImageData(...')
     heightMapCtx.putImageData(heightMapImage, 0, 0);
     specularMapCtx.putImageData(specularMapImage, 0, 0);
     diffuseMapCtx.putImageData(diffuseMapImage, 0, 0);
     this.heightMap.update();
     this.specularMap.update();
     this.diffuseMap.update();
-    console.timeEnd('putImageData(...')
+
     console.time('generateNormalMap')
     this.bumpMap = this.generateNormalMap(heightMapImage, resolution)
     console.timeEnd('generateNormalMap')
@@ -208,7 +215,6 @@ class PlanetMaterial {
     if (oldHeightMap) {
       setTimeout(() => oldHeightMap.dispose(), 2000)
     }
-    console.log(resolution)
   }
 
   generateNormalMap(heightMapImage: ImageData, resolution: number): BABYLON.DynamicTexture {
@@ -228,50 +234,7 @@ class PlanetMaterial {
     }
     const bumpImageData = bumpCtx.getImageData(0, 0, TEX_RES, TEX_RES)
 
-    const convolute = (pixels: ImageData, output: ImageData, weights: number[], opaque: number, channel: string[] = ['r','g', 'b']) => {
-      var side = Math.round(Math.sqrt(weights.length));
-      var halfSide = Math.floor(side / 2);
-      var src = pixels.data;
-      var sw = pixels.width;
-      var sh = pixels.height;
-      // pad output by the convolution matrix
-      var w = sw;
-      var h = sh;
-      var dst = output.data;
-      // go through the destination image pixels
-      var alphaFac = opaque ? 1 : 0;
-      for (var y = 0; y < h; y++) {
-        for (var x = 0; x < w; x++) {
-          var sy = y;
-          var sx = x;
-          var dstOff = (y * w + x) * 4;
-          // calculate the weighed sum of the source image pixels that
-          // fall under the convolution matrix
-          var r = 0, g = 0, b = 0, a = 0;
-          for (var cy = 0; cy < side; cy++) {
-            for (var cx = 0; cx < side; cx++) {
-              var scy = sy + cy - halfSide;
-              var scx = sx + cx - halfSide;
-              if (scy >= 0 && scy < sh && scx >= 0 && scx < sw) {
-                var srcOff = (scy * sw + scx) * 4;
-                var wt = weights[cy * side + cx];
-                r += src[srcOff] * wt;
-                g += src[srcOff + 1] * wt;
-                b += src[srcOff + 2] * wt;
-                a += src[srcOff + 3] * wt;
-              }
-            }
-          }
-          channel.includes('r') ? dst[dstOff] += r / 3 : null
-          channel.includes('g') ? dst[dstOff + 1] += g / 3 : null
-          channel.includes('b') ? dst[dstOff + 2] += b / 3 : null
-          dst[dstOff + 3] = a + alphaFac * (255 - a);
-        }
-      }
-      return output;
-    }
-
-    const xNormalImage = convolute(
+    convolute(
       heightMapImage,
       bumpImageData,
       [-1, 0, 1,
@@ -281,7 +244,7 @@ class PlanetMaterial {
       ['r']
     )
 
-    const yNormalImage = convolute(
+    convolute(
       heightMapImage,
       bumpImageData,
       [1, 2, 1,
@@ -291,11 +254,11 @@ class PlanetMaterial {
       ['g']
     )
 
-    bumpCtx.putImageData(yNormalImage, 0, 0)
+    bumpCtx.putImageData(bumpImageData, 0, 0)
 
     this.bumpMap.update();
     return this.bumpMap
   }
 }
 
-export { PlanetMaterial }
+export { PlanetMaterialManager }

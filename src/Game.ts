@@ -3,16 +3,15 @@ import * as localforage from 'localforage';
 import { Planet } from './Planet/Planet';
 import { HardwareInfo } from './Infrastructure/HardwareInfo';
 
-declare global {
-  interface Window {
-    planet: Planet
-  }
-}
-
+/**
+ * Handles the whole Babylon engine instance and it's
+ * main scenes and objects
+ */
 class Game {
   engine: BABYLON.Engine
   scene: BABYLON.Scene
   camera: BABYLON.ArcRotateCamera
+  light: BABYLON.Light
   planet: Planet
 
   constructor(el: HTMLCanvasElement) {
@@ -22,9 +21,6 @@ class Game {
     window.game = this
     this.engine = new BABYLON.Engine(el, undefined, engineOptions, false);
     this.scene = new BABYLON.Scene(this.engine);
-
-    this.setGraphicalSettings()
-
     this.camera = new BABYLON.ArcRotateCamera(
       "camera",
       Math.PI / 2,
@@ -38,29 +34,45 @@ class Game {
     this.camera.wheelPrecision = 30
     this.camera.pinchPrecision = 100
 
-    // const light = new BABYLON.DirectionalLight(
-    //   "light",
-    //   new BABYLON.Vector3(0.5, -0.6, 0),
-    //   this.scene);
-    const light = new BABYLON.HemisphericLight(
+    this.light = new BABYLON.HemisphericLight(
       "light",
       new BABYLON.Vector3(0.5, 1, 0),
       this.scene);
 
-    this.planet = (window as any).planet = new Planet('planet', {}, this.scene)
-    // const mesh = BABYLON.MeshBuilder.CreateGround("mesh", {}, this.scene);
+    this.planet = new Planet('planet', {}, this.scene)
 
-    // Rendering pipeline
-    var pipeline = new BABYLON.DefaultRenderingPipeline(
+    this.setGraphicalSettings()
+    this.prepareGraphicalPipeline()
+
+    if (process.env.NODE_ENV != 'production') {
+      this.scene.debugLayer.show({ embedMode: true, overlay: true });
+    }
+
+    this.engine.runRenderLoop(() => this.render());
+  }
+
+  render() {
+    if (this.planet) {
+      this.planet.rotateAround(BABYLON.Vector3.Zero(), new BABYLON.Vector3(0, 1, 0), 0.0001)
+      this.planet.mesh.atmosphereMesh.rotateAround(BABYLON.Vector3.Zero(), new BABYLON.Vector3(0, 1, 0), 0.0003)
+    }
+    this.scene.render();
+  }
+
+  setGraphicalSettings() {
+    if (!HardwareInfo.hasGoodVideoCard()) {
+      this.engine.setHardwareScalingLevel(1.25)
+    }
+    this.engine.renderEvenInBackground = false
+  }
+
+  prepareGraphicalPipeline(): BABYLON.DefaultRenderingPipeline {
+    const pipeline = new BABYLON.DefaultRenderingPipeline(
       "default", // The name of the pipeline
       true, // Do you want HDR textures ?
       this.scene, // The scene instance
       [this.camera] // The list of cameras to be attached to
-    );
-    // pipeline.chromaticAberrationEnabled = true;
-    // pipeline.chromaticAberration.aberrationAmount = 35;
-    // pipeline.chromaticAberration.radialIntensity = 1;
-    // pipeline.chromaticAberration.centerPosition.y = 0.35;
+    )
 
     pipeline.imageProcessingEnabled = true
     pipeline.imageProcessing.contrast = 1.2
@@ -78,23 +90,7 @@ class Game {
       pipeline.sharpen.edgeAmount = 0.2
     }
 
-    // this.scene.debugLayer.show({ embedMode: true, overlay: true });
-    this.engine.runRenderLoop(() => this.render());
-  }
-
-  render() {
-    if (this.planet) {
-      this.planet.rotateAround(BABYLON.Vector3.Zero(), new BABYLON.Vector3(0, 1, 0), 0.0001)
-      this.planet.mesh.atmosphereMesh.rotateAround(BABYLON.Vector3.Zero(), new BABYLON.Vector3(0, 1, 0), 0.0003)
-    }
-    this.scene.render();
-  }
-
-  setGraphicalSettings() {
-    if (!HardwareInfo.hasGoodVideoCard()) {
-      // this.engine.setHardwareScalingLevel(1.3)
-    }
-    this.engine.renderEvenInBackground = false
+    return pipeline
   }
 }
 
