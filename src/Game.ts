@@ -25,13 +25,14 @@ class Game {
       "camera",
       Math.PI / 2,
       Math.PI / 3.2,
-      2.5,
+      4.5,
       BABYLON.Vector3.Zero(),
       this.scene
     );
+    this.camera.lowerRadiusLimit = 2.1
 
     this.camera.attachControl(el, true);
-    this.camera.wheelPrecision = 30
+    this.camera.wheelPrecision = 90
     this.camera.pinchPrecision = 100
 
     this.light = new BABYLON.HemisphericLight(
@@ -61,7 +62,7 @@ class Game {
 
   setGraphicalSettings() {
     if (!HardwareInfo.hasGoodVideoCard()) {
-      this.engine.setHardwareScalingLevel(1.25)
+      // this.engine.setHardwareScalingLevel(1.25)
     }
     this.engine.renderEvenInBackground = false
   }
