@@ -4,7 +4,7 @@ import { Planet } from './Planet/Planet';
 import { HardwareInfo } from './Infrastructure/HardwareInfo';
 
 /**
- * Handles the whole Babylon engine instance and it's
+ * Handles the whole Babylon engine instance and its
  * main scenes and objects
  */
 class Game {
